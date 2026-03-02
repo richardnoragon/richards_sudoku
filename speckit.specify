@@ -1,0 +1,62 @@
+# speckit Specification: richards_sudoku (Python + PyQt6)
+
+## Objective
+Deliver a cross-platform PyQt6 desktop app (Python 3.13) to create, play, solve, and share multiple Sudoku variants (Standard 9x9, Jigsaw, Str8ts, 1–25). Provide robust persistence, assistance tools, statistics, and deterministic generation/solving within defined performance budgets.
+
+## Scope
+- In-scope: UI (PyQt6), puzzle generation/validation/solving, variant management, save/load/import/export (JSON/text), hints, pencil marks, undo/redo, conflict highlighting, timer and stats, difficulty selection, themes and accessibility (light/dark, font sizes, contrast), keyboard and mouse controls, keyboard-only operation.
+- Out-of-scope (for now): online services, leaderboards, multiplayer, cloud saves, mobile UI, telemetry.
+
+## Architecture
+- Layered modules:
+  - generator: seeded generators per variant and difficulty; ensure uniqueness and solvability.
+  - solver: backtracking + constraint propagation; reusable validator; deterministic.
+  - model: puzzle state, candidates, undo/redo stack, timer, stats, hint limits.
+  - persistence: JSON/text import/export; versioned schema; atomic save/load.
+  - ui: PyQt6 widgets for grid, controls, dialogs; theme manager; accessibility.
+  - services: command bus for undo/redo, hint service, conflict detection.
+- Dependency direction: ui -> services -> model -> solver/generator; persistence depends only on model.
+
+## Data and Formats
+- Internal board: matrix of cells with value, candidates, region id, fixed/editable flag.
+- Variants metadata: region layouts (e.g., Jigsaw masks), constraints, symbols (1-9, 1-25).
+- Save schema (JSON): version, variant, difficulty, seed, board state, timer, moves, hints used, undo/redo stack snapshot, theme and font settings.
+- Import/export: JSON primary; also support text format with rows of digits plus headers including variant, size, seed, difficulty; validation on import. Prompt user for paths on each save/load/import/export.
+
+## UI/UX
+- Grid view: selectable cells with highlight of cell/row/column/region; pencil marks visually distinct; conflict highlight without blocking input.
+- Controls: new, load, save, import, export, hint, pencil toggle, undo, redo, difficulty selector, variant selector; keyboard shortcuts for number entry and navigation; keyboard-only support for all actions.
+- Themes/accessibility: light/dark presets; adjustable font size (min 6pt); avoid color-only cues; default Arial font; palette and additional fonts to be supplied later.
+- Feedback: toast/dialog for save/load/import/export success/failure; hint count visible; timer visible and pauses on save.
+
+## Behavior
+- New game: select variant and difficulty; generate with seed; validate solvable and unique; start timer.
+- Hint: user-selectable mode per hint invocation (show candidate, auto-fill single cell, multi-cell reveal, or full solution walkthrough); mode can change mid-game; decrement available hints; track count.
+- Undo/redo: unbounded stack (practically capped by memory guard); operates on board edits and pencil marks only; timer and hint counters unaffected.
+- Conflict detection: continuous checks for row/column/region duplicates; surfaced as highlight.
+- Persistence: save/load is atomic; load restores timer, stats, candidates, pencil marks, undo/redo.
+
+## Performance Targets
+- Validation: <200ms typical 9x9; solving: <2s typical 9x9 on baseline hardware; scales reasonably for larger grids.
+- UI responsiveness: no blocked input during generation/solve; use background workers with progress cues.
+- Save/load/import/export: <300ms typical; guard against data loss with temp file then move.
+- Memory: bounded candidate tracking and undo/redo; avoid quadratic growth on 1–25 grids.
+
+## Testing
+- Unit: solver correctness, generator uniqueness/solvability per difficulty, conflict detection, hint correctness (per hint mode), undo/redo integrity (board edits/pencil marks), stats tracking, persistence round-trip.
+- Property/scenario: randomized seeds across variants and sizes; invariants on constraints; import/export fixtures.
+- UI smoke: grid render, selection/highlight, pencil marks visibility, hint button availability/modes, undo/redo, theme toggle, keyboard-only flows.
+- Performance: benchmarks for solver/generator and persistence budgets; deterministic seeds in tests.
+- Tooling: pytest, pytest-qt (qtbot), hypothesis optional.
+
+## Milestones
+- MVP (aligns with roadmap): standard 9x9 UI, generation, validate, save/load JSON, timer, pencil marks, undo/redo, basic themes (light/dark, Arial), keyboard-only paths.
+- Beta: add Jigsaw, Str8ts, 1–25; hints (multi-mode), conflict highlighting, import/export, difficulty selection, move/hint tracking, end-of-game stats.
+- Full: puzzle editor, online sharing, multiplayer timed challenges, cloud saves, mobile-friendly UI, further solver optimization.
+
+## Acceptance Criteria (per PRD/Checklist)
+- Users can start, play, and finish standard Sudoku with responsive UI and preserved state on save/load.
+- Variants playable with consistent controls and assistance; import/export loads solvable puzzles and remains playable end-to-end.
+- Statistics (time, moves, hints) tracked and shown at completion; hint limits enforceable; keyboard-only flows supported.
+- Architecture remains modular with typed interfaces and validated inputs; persistence is versioned and backward compatible.
+- Meets performance budgets and passes test suite outlined above.

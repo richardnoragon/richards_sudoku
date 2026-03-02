@@ -1,0 +1,48 @@
+# Virtual environments
+rsudoku/
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+*.egg
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.coveragerc
+
+# mypy / type stubs
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS artefacts
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Saved game files (user data, not source)
+*.sudoku.json
+
+# Logs
+*.log

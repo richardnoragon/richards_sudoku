@@ -1,0 +1,28 @@
+# speckit Constitution: richards_sudoku
+
+## Code Quality
+- Preserve modular boundaries: generation, solving, UI, persistence, and statistics must remain decoupled with clear interfaces and no cross-layer side effects.
+- Enforce readability: prefer explicit logic over clever shortcuts; include concise comments only for non-obvious algorithms (solver, generator, jigsaw/Str8ts rules).
+- Use typing and validation: type-hint public functions, validate inputs for puzzle size/variant, and fail fast on invalid states.
+- Serialization discipline: JSON save/load/import/export must be versioned and backward compatible; reject malformed payloads safely.
+- Determinism for reproducibility: generators accept seeds; solver behavior remains stable across runs and OSes.
+
+## Testing Standards
+- Unit tests cover solver correctness, generator validity (unique/solvable), persistence round-trips (save -> load), and stats tracking (timer/moves/hints).
+- Property-based or scenario suites exercise multiple grid sizes and variants (Standard, Jigsaw, Str8ts, 1–25) with conflict/constraint checks.
+- UI smoke tests verify grid rendering, selection, highlight behaviors, undo/redo, hint availability, and pencil mark visibility for each variant.
+- Regression harness for import/export: known fixtures must load, validate solvability, and remain playable end-to-end.
+- Performance guards: add tests/benchmarks for solver/runtime budgets to prevent slowdowns; enforce deterministic seeds in tests.
+
+## User Experience Consistency
+- Grid UX: always highlight selected cell, row, column, and region; pencil marks visually distinct from confirmed entries across themes and variants.
+- Controls parity: keyboard/mouse inputs, undo/redo, hint trigger, and pencil toggle behave the same for all variants and grid sizes.
+- Accessibility and theming: provide light/dark themes, adjustable font sizes, and readable contrast; avoid color-only cues for conflicts.
+- Persistence UX: save/load/import/export flows are discoverable, confirm success/failure, and never discard user progress without explicit consent.
+- Guidance and feedback: in-game help and hint usage counts are visible; conflicts and invalid moves are clearly indicated without blocking navigation.
+
+## Performance Requirements
+- Solver and validator complete typical 9x9 puzzles within interactive latency targets (<200ms for validation, <2s for solve) and scale gracefully for larger grids.
+- UI remains responsive during generation/solve via background work or progress cues; no frozen input during long operations.
+- Save/load/import/export operations complete quickly (<300ms for typical puzzles) and are atomic to prevent data loss.
+- Memory usage stays bounded for large variants ; avoid quadratic blowups in candidate tracking and undo/redo history.

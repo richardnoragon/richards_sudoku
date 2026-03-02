@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			".\\rsudoku\\Scripts\\pytest": true,
+			".\\rsudoku\\Scripts\\python.exe": true,
+			"git init": true,
+			"git add": true
+		}
+	}
+}

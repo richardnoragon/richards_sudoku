@@ -1,0 +1,38 @@
+# speckit Tasks: richards_sudoku
+
+## Foundations (MVP-aligned)
+- [x] Initialize project structure: `src/` package with main entry, `tests/`, basic `pyproject`/pytest config.
+- [x] Implement core domain types: Cell, Board, Move, VariantMetadata, JSON schema version helper.
+- [x] Build solver/validator for standard 9x9 (backtracking + constraints) and seedable generator ensuring uniqueness.
+- [x] Implement model services: candidates, undo/redo (board+pencil only), timer, stats tracking.
+- [x] Persistence: versioned JSON save/load with atomic write; prompt for path; round-trip tests.
+- [x] PyQt6 UI shell: main window, grid widget, actions (new/load/save/import/export/hint/pencil/undo/redo), keyboard/mouse + keyboard-only navigation; light/dark (Arial, min font 6pt).
+- [x] Wire basic flow: new standard game -> generate -> render; edit -> undo/redo; save/load restores timer/stats/candidates.
+- [x] Tests: unit for solver/generator/persistence; pytest-qt smoke for grid render/select/undo/redo.
+
+## Variants & Assistance (Beta)
+- Add variant registry and layouts (Jigsaw masks, Str8ts rules, 1–25 symbols); extend solver/generator per variant.
+- Difficulty heuristics per variant; ensure uniqueness/solvability per level.
+- Conflict highlighting across variants.
+- Import/export: JSON primary + text rows with headers (variant, size, seed, difficulty); validation; prompts for path.
+- Hint service: runtime-selectable modes (candidate, auto-fill cell, multi-cell reveal, walkthrough); tracking + limits.
+- Stats UI: moves/hints tracked; end-of-game summary dialog.
+- UI polish: variant/difficulty selectors, hint mode selector, status feedback; accessibility checks.
+- Tests: property/scenario across variants; fixtures for import/export; UI smoke for hint modes and variant parity.
+
+## Performance & Hardening
+- Benchmarks for solver/validator (<200ms validate, <2s solve 9x9) and persistence (<300ms typical); profile hot paths.
+- Memory guards for undo/redo and candidate tracking (esp. 1–25).
+- Robust error handling for malformed imports; deterministic seeds in tests.
+- Documentation: architecture, data formats, extension points, usage.
+
+## Future-ready Hooks
+- Stubs/hooks for puzzle editor, online sharing, multiplayer, cloud saves, mobile-friendly UI.
+- Theming extensibility for future palette/fonts; English-only baseline with i18n hooks.
+- Additional solver optimizations for larger grids.
+
+## Fleeting
+- Define difficulty classification criteria per level (givens, heuristic thresholds) and wire into generators.
+- Source/define variant assets: Jigsaw region masks, Str8ts rule specifics/layouts, 1–25 symbols/regions.
+- Finalize text import/export schema: exact headers/fields, delimiters, and validation rules.
+- Specify hint limit configuration location (per-game setting vs. global default) and UI control.

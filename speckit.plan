@@ -1,0 +1,51 @@
+# speckit Plan: richards_sudoku
+
+## Phases
+1) Foundations (MVP alignment)
+- Set up project layout (src/, tests/) with PyQt6 entrypoint and config.
+- Implement core model: board state, candidates, undo/redo (board + pencil), timer, stats.
+- Implement solver/validator (backtracking + constraints) for standard 9x9; seedable generator producing unique solvable puzzles; difficulty placeholder.
+- Build PyQt6 UI shell: main window, grid widget, keyboard/mouse + keyboard-only controls, light/dark (Arial, min font 6pt).
+- Persistence: versioned JSON save/load with atomic writes; prompt for path.
+- Basic flows: new game (standard), play, save/load, pencil marks, undo/redo, timer display.
+- Smoke tests: pytest + pytest-qt for render/select/undo/redo; unit tests for solver/generator/persistence round-trip.
+
+2) Variants & Assistance (Beta alignment)
+- Add variant metadata + layouts (Jigsaw masks, Str8ts rules, 1–25 symbols); generate and validate per variant.
+- Expand generator difficulty tuning heuristics; ensure uniqueness/solvability.
+- Implement conflict highlighting across variants.
+- Import/export: JSON primary + text rows with headers (variant, size, seed, difficulty); prompt paths; validation on import.
+- Hint service: runtime-selectable modes (show candidate, auto-fill cell, multi-cell reveal, full walkthrough); tracking + limits.
+- Stats: moves/hints tracked; end-of-game summary.
+- UI polish: variant/difficulty selectors, hint mode selector, status feedback, accessibility checks.
+- Tests: property/scenario suites across variants; fixtures for import/export; UI smoke for hint modes and variant parity.
+
+3) Performance & Hardening
+- Benchmarks to enforce targets (<200ms validate, <2s solve 9x9; <300ms persistence typical); profile hot paths.
+- Memory guards on undo/redo and candidate tracking (esp. 1–25).
+- Robust error handling for malformed imports; deterministic seeds in tests.
+- Documentation: module boundaries, data formats, extension points.
+
+4) Future-ready (Full release prep)
+- Hooks for puzzle editor, online sharing, multiplayer, cloud saves, mobile-friendly UI.
+- Theming extensibility (palette/fonts to be supplied later); i18n hooks (English-only default).
+- Additional solver optimizations for large grids.
+
+## Work Breakdown (initial tasks)
+- Bootstrap repo: venv/pip already set; add src/tests scaffolding and tooling config (pytest, pytest-qt, hypothesis optional).
+- Implement core types: Cell, Board, Move, VariantMetadata; JSON schema versioning helper.
+- Solver/validator and standard generator with seed; tests for uniqueness/solvability.
+- Persistence layer with atomic writes; round-trip tests.
+- UI skeleton: main window, grid widget, command actions (new/load/save/import/export/hint/pencil/undo/redo), keyboard shortcuts.
+- State services: undo/redo stack (board+pencil), hint service stub with mode selection, conflict detector.
+- Basic styling: light/dark theme, Arial, font scaling min 6pt; keyboard-only navigation.
+- Connect flows: new game -> generate -> render; edit -> undo/redo; save/load -> restore timer/stats/candidates.
+- Add variant registry and layouts; extend generator/solver to Jigsaw, Str8ts, 1–25; import/export headers.
+- Hint modes implementation with tracking and limits; end-of-game stats dialog.
+- Performance harness and benchmarks; enforce budgets.
+
+## Deliverables
+- Running PyQt6 desktop app (single-window) with required MVP/Beta functionality.
+- Versioned JSON/text persistence with prompts.
+- Test suite (unit, property/scenario, UI smoke, perf benchmarks).
+- Documentation for architecture, data formats, variant extension, and usage.
