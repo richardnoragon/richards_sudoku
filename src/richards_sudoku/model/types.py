@@ -12,7 +12,11 @@ class Variant(str, Enum):
     STANDARD = "standard"
     JIGSAW = "jigsaw"
     STR8TS = "str8ts"
-    EXTENDED = "extended"
+    ONE_TO_25 = "1to25"
+    KILLER = "killer"
+    CODEWORDS = "codewords"
+    KENKEN = "kenken"
+    KAKURO = "kakuro"
 
 
 @dataclass
@@ -23,6 +27,7 @@ class Cell:
     candidates: set[int] = field(default_factory=set)
     region_id: int = 0
     is_fixed: bool = False
+    is_black: bool = False
 
     def copy(self) -> Cell:
         return Cell(
@@ -30,6 +35,7 @@ class Cell:
             candidates=set(self.candidates),
             region_id=self.region_id,
             is_fixed=self.is_fixed,
+            is_black=self.is_black,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -38,6 +44,7 @@ class Cell:
             "candidates": sorted(self.candidates),
             "region_id": self.region_id,
             "is_fixed": self.is_fixed,
+            "is_black": self.is_black,
         }
 
     @classmethod
@@ -47,6 +54,7 @@ class Cell:
             candidates=set(data["candidates"]),
             region_id=data["region_id"],
             is_fixed=data["is_fixed"],
+            is_black=data.get("is_black", False),
         )
 
 
@@ -77,6 +85,8 @@ class VariantMetadata:
     constraints: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        if not self.region_layout:
+            return
         if len(self.region_layout) != self.size or any(
             len(row) != self.size for row in self.region_layout
         ):
@@ -86,18 +96,27 @@ class VariantMetadata:
             )
 
     def to_dict(self) -> dict[str, Any]:
+        constraints = self.constraints
+        # clue_positions uses tuple keys which JSON cannot encode; it is rebuilt
+        # automatically on load via build_kakuro_clue_positions, so exclude it.
+        if constraints and "clue_positions" in constraints:
+            constraints = {k: v for k, v in constraints.items() if k != "clue_positions"}
         return {
             "name": self.name.value,
             "size": self.size,
             "symbols": self.symbols,
             "region_layout": self.region_layout,
-            "constraints": self.constraints,
+            "constraints": constraints,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VariantMetadata:
+        # Migrate legacy "extended" saves to the renamed "1to25" variant.
+        raw_name = data["name"]
+        if raw_name == "extended":
+            raw_name = "1to25"
         return cls(
-            name=Variant(data["name"]),
+            name=Variant(raw_name),
             size=data["size"],
             symbols=data["symbols"],
             region_layout=data["region_layout"],
@@ -145,6 +164,10 @@ class Board:
             raise ValueError(
                 f"Cannot modify fixed cell at ({move.row}, {move.col})"
             )
+        if c.is_black:
+            raise ValueError(
+                f"Cannot modify black cell at ({move.row}, {move.col})"
+            )
         c.value = move.new_value
         c.candidates = set(move.new_candidates)
 
@@ -171,8 +194,12 @@ class Board:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Board:
         cells = [[Cell.from_dict(c) for c in row] for row in data["cells"]]
+        # Migrate legacy "extended" saves to the renamed "1to25" variant.
+        raw_variant = data["variant"]
+        if raw_variant == "extended":
+            raw_variant = "1to25"
         return cls(
             size=data["size"],
-            variant=Variant(data["variant"]),
+            variant=Variant(raw_variant),
             cells=cells,
         )

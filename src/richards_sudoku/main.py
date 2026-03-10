@@ -1,16 +1,23 @@
 """Entry point for the richards_sudoku application."""
 from __future__ import annotations
 
+import random
 import sys
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction, QActionGroup, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
+    QButtonGroup,
+    QDialog,
+    QDockWidget,
     QFileDialog,
+    QGridLayout,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMessageBox,
+    QRadioButton,
     QSizePolicy,
     QStatusBar,
     QToolBar,
@@ -18,7 +25,9 @@ from PyQt6.QtWidgets import (
 )
 
 from richards_sudoku.controller.game_controller import GameController
+from richards_sudoku.ui.game_complete_dialog import GameCompleteDialog
 from richards_sudoku.ui.grid_widget import SudokuGridWidget
+from richards_sudoku.ui.new_game_dialog import NewGameDialog
 from richards_sudoku.ui.theme import DARK, LIGHT, apply_palette, make_font
 
 
@@ -32,12 +41,44 @@ class MainWindow(QMainWindow):
 
         self._dark_mode = False
 
-        # --- Central widget: grid ---
+        # --- Central widget: scrollable grid (K3) ---
+        from PyQt6.QtWidgets import QScrollArea
         self._grid = SudokuGridWidget()
-        self.setCentralWidget(self._grid)
+        scroll = QScrollArea()
+        scroll.setWidget(self._grid)
+        scroll.setWidgetResizable(True)
+        scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setCentralWidget(scroll)
+
+        # --- Codebook Panel (L4) — QDockWidget, bottom, hidden by default ---
+        self._codebook_dock = QDockWidget("Codebook", self)
+        self._codebook_dock.setObjectName("codebook_dock")
+        self._codebook_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
+        self._codebook_widget = QWidget()
+        self._codebook_layout = QGridLayout(self._codebook_widget)
+        self._codebook_layout.setContentsMargins(4, 4, 4, 4)
+        self._codebook_layout.setSpacing(4)
+        # 9 slots: A–I labels + digit fields
+        self._codebook_fields: list[QLineEdit] = []
+        letters = list("ABCDEFGHI")
+        for i, letter in enumerate(letters):
+            lbl = QLabel(f"{letter}:")
+            field = QLineEdit()
+            field.setMaximumWidth(32)
+            field.setReadOnly(True)  # locked/given slots — player cannot edit in the panel
+            self._codebook_layout.addWidget(lbl, 0, i * 2)
+            self._codebook_layout.addWidget(field, 0, i * 2 + 1)
+            self._codebook_fields.append(field)
+        self._codebook_dock.setWidget(self._codebook_widget)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._codebook_dock)
+        self._codebook_dock.hide()
 
         # --- Controller (subscribes to grid signals internally) ---
         self._ctrl = GameController(self._grid)
+        self._ctrl.set_complete_callback(self._on_game_complete)
+
+        # Hint mode (for status bar radio buttons)
+        self._hint_mode: str = "auto_fill"
 
         # --- Connect grid signals ---
         self._grid.cell_selected.connect(self._on_cell_selected)
@@ -84,6 +125,9 @@ class MainWindow(QMainWindow):
         # Game
         self._act_hint = self._action("&Hint", "H", "Show a hint")
         self._act_check = self._action("&Check Board", "F5", "Check for conflicts")
+        self._act_restart = self._action("&Restart", "F9", "Restart (keep timer)")
+        self._act_restart_timer = self._action("Restart && Reset &Timer", "Shift+F9",
+                                               "Restart and reset timer")
 
         # View
         self._act_dark = self._action("&Dark Mode", "F2", "Toggle dark/light theme")
@@ -98,6 +142,8 @@ class MainWindow(QMainWindow):
         self._act_undo.triggered.connect(self._on_undo)
         self._act_redo.triggered.connect(self._on_redo)
         self._act_hint.triggered.connect(self._on_hint)
+        self._act_restart.triggered.connect(lambda: self._ctrl.restart_game(reset_timer=False))
+        self._act_restart_timer.triggered.connect(lambda: self._ctrl.restart_game(reset_timer=True))
 
     def _action(self, label: str, shortcut: str, tip: str) -> QAction:
         act = QAction(label, self)
@@ -134,6 +180,10 @@ class MainWindow(QMainWindow):
         game_menu = mb.addMenu("&Game")
         game_menu.addAction(self._act_hint)
         game_menu.addAction(self._act_check)
+        game_menu.addSeparator()
+        restart_menu = game_menu.addMenu("&Restart")
+        restart_menu.addAction(self._act_restart)
+        restart_menu.addAction(self._act_restart_timer)
 
         view_menu = mb.addMenu("&View")
         view_menu.addAction(self._act_dark)
@@ -172,6 +222,24 @@ class MainWindow(QMainWindow):
         self._lbl_mode.setFont(make_font(9))
         sb.addWidget(self._lbl_mode)
 
+        # Hint mode radio buttons
+        self._hint_mode_group = QButtonGroup(self)
+        _hint_modes = [
+            ("Auto", "auto_fill"),
+            ("Reveal", "reveal_cell"),
+            ("Elim.", "eliminate"),
+            ("Naked", "naked_single"),
+        ]
+        for label, mode in _hint_modes:
+            rb = QRadioButton(label)
+            rb.setFont(make_font(8))
+            rb.setChecked(mode == "auto_fill")
+            rb.toggled.connect(
+                lambda checked, m=mode: setattr(self, "_hint_mode", m) if checked else None
+            )
+            self._hint_mode_group.addButton(rb)
+            sb.addWidget(rb)
+
         # Spacer
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
@@ -180,6 +248,10 @@ class MainWindow(QMainWindow):
         self._lbl_timer = QLabel("00:00")
         self._lbl_timer.setFont(make_font(9))
         sb.addPermanentWidget(self._lbl_timer)
+
+        self._lbl_difficulty = QLabel("SE: ---")
+        self._lbl_difficulty.setFont(make_font(9))
+        sb.addPermanentWidget(self._lbl_difficulty)
 
         self._lbl_cell = QLabel("")
         self._lbl_cell.setFont(make_font(9))
@@ -206,9 +278,23 @@ class MainWindow(QMainWindow):
         self._update_action_states()
 
     def _on_new_game(self) -> None:
-        self._ctrl.new_game()
+        initial_seed = random.randrange(2 ** 31)
+        dlg = NewGameDialog(self, initial_seed=initial_seed)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        meta = dlg.meta
+        difficulty = dlg.difficulty
+        hint_limit = dlg.hint_limit
+        self._ctrl.new_game(
+            meta=meta,
+            difficulty=difficulty,
+            seed=initial_seed,
+            hint_limit=hint_limit,
+        )
         self._clock.start()
+        self._refresh_difficulty_label()
         self._update_action_states()
+        self._refresh_codebook_panel(meta)
         self.statusBar().showMessage("New game started.", 3000)
 
     def _on_undo(self) -> None:
@@ -220,10 +306,8 @@ class MainWindow(QMainWindow):
             self._update_action_states()
 
     def _on_hint(self) -> None:
-        if self._ctrl.hint():
+        if self._ctrl.hint(mode=self._hint_mode):
             self._update_action_states()
-            if self._ctrl.is_complete:
-                self._on_game_complete()
 
     def _on_open(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -237,7 +321,9 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Load failed", str(exc))
             return
         self._clock.start()
+        self._refresh_difficulty_label()
         self._update_action_states()
+        self._refresh_codebook_panel(self._ctrl.variant_meta)
         self.statusBar().showMessage(f"Loaded: {path}", 3000)
 
     def _on_save(self) -> None:
@@ -265,20 +351,62 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Saved: {path}", 3000)
 
     def _on_game_complete(self) -> None:
-        elapsed = self._ctrl.stats.elapsed_seconds
-        mins, secs = divmod(int(elapsed), 60)
-        QMessageBox.information(
-            self,
-            "Puzzle Complete!",
-            f"Congratulations! Completed in {mins:02d}:{secs:02d}.\n"
-            f"Moves: {self._ctrl.stats.moves}   Hints: {self._ctrl.stats.hints_used}",
-        )
         self._clock.stop()
+        score, label = self._ctrl.se_rating
+        dlg = GameCompleteDialog(
+            self,
+            se_score=score,
+            se_label=label,
+            elapsed_seconds=self._ctrl.elapsed_seconds,
+            moves=self._ctrl.stats.moves,
+            hints_used=self._ctrl.stats.hints_used,
+        )
+        dlg.exec()
+        choice = dlg.result_choice
+        if choice == GameCompleteDialog.Result.NEW_GAME:
+            self._on_new_game()
+        elif choice == GameCompleteDialog.Result.RESTART:
+            self._ctrl.restart_game()
+            self._clock.start()
+            self._update_action_states()
 
     def _refresh_timer_label(self) -> None:
         elapsed = int(self._ctrl.elapsed_seconds)
         mins, secs = divmod(elapsed, 60)
         self._lbl_timer.setText(f"{mins:02d}:{secs:02d}")
+
+    def _refresh_codebook_panel(self, meta) -> None:
+        """Show/update the Codebook Panel for Codewords; hide it for all other variants."""
+        if meta is None or meta.name.value != "codewords":
+            self._codebook_dock.hide()
+            return
+
+        codebook: dict[str, int] = meta.constraints.get("codebook") or {}
+        given_mappings: dict[str, int] = meta.constraints.get("given_mappings") or {}
+        letters = list("ABCDEFGHI")
+        for i, letter in enumerate(letters):
+            field = self._codebook_fields[i]
+            digit = codebook.get(letter)
+            if digit is not None:
+                field.setText(str(digit))
+            else:
+                field.clear()
+            # Bold and read-only for given mappings
+            bold = letter in given_mappings
+            font = field.font()
+            font.setBold(bold)
+            field.setFont(font)
+
+        self._codebook_dock.show()
+
+    def _refresh_difficulty_label(self) -> None:
+        score, label = self._ctrl.se_rating
+        if label == "Invalid":
+            self._lbl_difficulty.setText("SE: Invalid")
+        elif score > 0.0:
+            self._lbl_difficulty.setText(f"SE: {label} ({score:.1f})")
+        else:
+            self._lbl_difficulty.setText("SE: ---")
 
     def _update_action_states(self) -> None:
         """Enable/disable actions based on current state."""

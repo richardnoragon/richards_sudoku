@@ -17,8 +17,12 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 - Standard 9x9 Sudoku.
 - Jigsaw Sudoku (irregular regions).
 - Str8ts.
-- Extended Sudoku
-- Future extensibility for additional variants.
+- Killer Sudoku (cage‑sum constraints).
+- 1–25 Sudoku (25×25 grid with symbols 1–25; Extended Variants phase).
+- Codewords Sudoku (9×9; letters A–I substitute for digits 1–9; bijective codebook with difficulty-scaled given mappings; Extended Variants phase).
+- KenKen / Calcudoku (N×N for N ∈ {4,6,9}; row and column uniqueness; arithmetic cages with +, −, ×, ÷ operations; Extended Variants phase).
+- Kakuro (crossword-sum grid; run-sum and no-repeat-per-run constraints; diagonal clue labels in black cells; Extended Variants phase).
+- Architecture supports future variants via variant registry.
 
 ### 2.3 Gameplay Assistance
 - In‑game help system.
@@ -28,6 +32,8 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 - Pencil‑in notes (candidate numbers per cell).
 - Highlight conflicts (duplicate numbers in row/column/region).
 - Undo/redo moves.
+- **Difficulty levels** (Easy, Medium, Hard, Expert/Extreme) selectable at new game.
+- **SE difficulty rating**: automatic grading via SukakuExplainer‑style simulation; score (0–8.0) and category displayed in status bar at game start and after load.
 
 ### 2.4 Tracking & Analytics
 - Timer to measure solution duration.
@@ -88,10 +94,10 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 ## 5. Future Enhancements
 - Multiplayer or competitive mode (timed challenges).
 - Online puzzle sharing and leaderboards.
-- Difficulty levels (easy, medium, hard, expert).
 - Puzzle editor for custom rule sets.
 - Mobile‑friendly UI adaptation.
 - Integration with cloud storage for save files.
+- Advanced SE techniques: XY‑Wing, XYZ‑Wing, Unique Rectangles, BUG, Forcing Chains.
 
 ---
 

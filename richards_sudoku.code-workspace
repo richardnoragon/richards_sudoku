@@ -9,7 +9,342 @@
 			".\\rsudoku\\Scripts\\pytest": true,
 			".\\rsudoku\\Scripts\\python.exe": true,
 			"git init": true,
-			"git add": true
+			"git add": true,
+			".\\rsudoku\\Scripts\\Activate.ps1": true,
+			"/^python -m pytest tests/test_solver\\.py -v 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_solver\\.py -v --timeout=120 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"Set-Content": true,
+			"&": true,
+			"ForEach-Object": true,
+			"New-Item": true,
+			"Out-Null": true,
+			"Copy-Item": true,
+			".\\.venv\\Scripts\\Activate.ps1": true,
+			"/^\\.\\\\\\.venv\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -x -q 2>&1 \\| Select-Object -First 100$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			".\\.venv\\Scripts\\python.exe": true,
+			".\\.venv\\Scripts\\pip.exe": true,
+			".\\.venv\\Scripts\\richards-sudoku.exe": true,
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nold = '`is_complete` also checks cage sums; `_KillerCage` SE permutation cap \\(default 10 000\\); cage sum overlay \\(topmost-leftmost = row-major minimum; ~20\\\\u201325% height\\); unified `_draw_edges` renders cage boundaries using \\*\\*same thick pen as box borders\\*\\* \\(no separate style \\\\u2014 Killer uses standard 3\\\\u00d73 regions so box borders already bound different cages\\); conflict detection extended; cage member highlight on selection; cages in `constraints` dict \\(no schema bump\\)\\.'\nnew = '`is_complete` also checks cage sums \\(\\*\\*inline in `GameController\\.is_complete`\\*\\* \\\\u2014 after `validate\\(\\)` passes, if `self\\._meta\\.name == Variant\\.KILLER` iterate cage targets; `solver\\.validate\\(\\)` not extended; R5 Q5, Option A\\); `_KillerCage` SE permutation cap \\(default 10 000\\); cage sum overlay \\(topmost-leftmost = row-major minimum; ~20\\\\u201325% height\\); unified `_draw_edges` renders cage boundaries using \\*\\*same thick pen as box borders\\*\\* \\(no separate style \\\\u2014 Killer uses standard 3\\\\u00d73 regions so box borders already bound different cages\\); conflict detection extended; cage member highlight on selection \\\\u2014 `cage_member_bg` tint sits between `peer` and `fixed` in `_draw_board` chain \\(R5 Q3, Option A\\): `selected > conflict > peer > cage_member > fixed > is_black > base`; cages in `constraints` dict \\(no schema bump\\)\\.'\nif old in content:\n    print\\('FOUND'\\)\n    new_content = content\\.replace\\(old, new, 1\\)\n    open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', 'w', encoding='utf-8'\\)\\.write\\(new_content\\)\n    print\\('REPLACED'\\)\nelse:\n    print\\('NOT FOUND'\\)\n    # show what's around the phrase\n    idx = content\\.find\\('cage member highlight on selection'\\)\n    if idx >= 0:\n        print\\(repr\\(content\\[idx:idx\\+100\\]\\)\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nidx = content\\.find\\('is_complete also checks cage sums'\\)\nif idx >= 0:\n    print\\(repr\\(content\\[idx:idx\\+200\\]\\)\\)\nelse:\n    print\\('not found, searching nearby\\.\\.\\.'\\)\n    idx2 = content\\.find\\('CagePartitioner'\\)\n    if idx2 >= 0:\n        print\\(repr\\(content\\[idx2:idx2\\+500\\]\\)\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nidx = content\\.find\\('CagePartitioner'\\)\n# Show more context\nprint\\(repr\\(content\\[idx\\+400:idx\\+800\\]\\)\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nold = '\\\\`is_complete\\\\` also checks cage sums; \\\\`_KillerCage\\\\` SE permutation cap \\(default 10\\\\u202f000\\); cage sum overlay \\(topmost-leftmost = row-major minimum; ~20\\\\u201325% height\\); unified \\\\`_draw_edges\\\\` renders cage boundaries using \\*\\*same thick pen as box borders\\*\\* \\(no separate style \\\\u2014 Killer uses standard 3\\\\u00d73 regions so box borders already bound different cages\\); conflict detection extended; cage member highlight on selection; cages in \\\\`constraints\\\\` dict \\(no schema bump\\)\\.'\nnew = '\\\\`is_complete\\\\` also checks cage sums \\(\\*\\*inline in \\\\`GameController\\.is_complete\\\\`\\*\\* \\\\u2014 after \\\\`validate\\(\\)\\\\` passes, if \\\\`self\\._meta\\.name == Variant\\.KILLER\\\\` iterate cage targets; \\\\`solver\\.validate\\(\\)\\\\` not extended; R5 Q5, Option A\\); \\\\`_KillerCage\\\\` SE permutation cap \\(default 10\\\\u202f000\\); cage sum overlay \\(topmost-leftmost = row-major minimum; ~20\\\\u201325% height\\); unified \\\\`_draw_edges\\\\` renders cage boundaries using \\*\\*same thick pen as box borders\\*\\* \\(no separate style \\\\u2014 Killer uses standard 3\\\\u00d73 regions so box borders already bound different cages\\); conflict detection extended; cage member highlight on selection \\\\u2014 \\\\`cage_member_bg\\\\` tint sits between \\\\`peer\\\\` and \\\\`fixed\\\\` in \\\\`_draw_board\\\\` chain \\(R5 Q3, Option A\\): \\\\`selected > conflict > peer > cage_member > fixed > is_black > base\\\\`; cages in \\\\`constraints\\\\` dict \\(no schema bump\\)\\.'\nif old in content:\n    print\\('FOUND'\\)\n    new_content = content\\.replace\\(old, new, 1\\)\n    open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', 'w', encoding='utf-8'\\)\\.write\\(new_content\\)\n    print\\('REPLACED OK'\\)\nelse:\n    print\\('NOT FOUND - showing snippet'\\)\n    idx = content\\.find\\('cage member highlight on selection'\\)\n    print\\(repr\\(content\\[idx-20:idx\\+100\\]\\)\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nidx = content\\.find\\('cage member highlight on selection'\\)\nprint\\(repr\\(content\\[idx-200:idx\\+60\\]\\)\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\n# Use narrow targeted replacement\nold = 'conflict detection extended; cage member highlight on selection; cages in'\nnew = 'conflict detection extended; cage member highlight on selection \\\\u2014 \\\\`cage_member_bg\\\\` tint sits between \\\\`peer\\\\` and \\\\`fixed\\\\` in \\\\`_draw_board\\\\` chain \\(R5 Q3, Option A\\): \\\\`selected > conflict > peer > cage_member > fixed > is_black > base\\\\`; cages in'\nif old in content:\n    print\\('FOUND chunk 1'\\)\n    content = content\\.replace\\(old, new, 1\\)\nelse:\n    print\\('NOT FOUND chunk 1'\\)\n\nold2 = 'also checks cage sums; \\\\`_KillerCage\\\\`'\nnew2 = 'also checks cage sums \\(\\*\\*inline in \\\\`GameController\\.is_complete\\\\`\\*\\* \\\\u2014 after \\\\`validate\\(\\)\\\\` passes, if \\\\`self\\._meta\\.name == Variant\\.KILLER\\\\` iterate cage targets; \\\\`solver\\.validate\\(\\)\\\\` not extended; R5 Q5, Option A\\); \\\\`_KillerCage\\\\`'\nif old2 in content:\n    print\\('FOUND chunk 2'\\)\n    content = content\\.replace\\(old2, new2, 1\\)\nelse:\n    print\\('NOT FOUND chunk 2'\\)\n    # show actual text\n    idx = content\\.find\\('also checks cage sums'\\)\n    if idx >= 0:\n        print\\(repr\\(content\\[idx:idx\\+60\\]\\)\\)\n\nopen\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', 'w', encoding='utf-8'\\)\\.write\\(content\\)\nprint\\('done'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python << 'EOF'\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\n\nold1 = 'conflict detection extended; cage member highlight on selection; cages in'\nnew1 = 'conflict detection extended; cage member highlight on selection \\\\u2014 `cage_member_bg` tint sits between `peer` and `fixed` in `_draw_board` chain \\(R5 Q3, Option A\\): `selected > conflict > peer > cage_member > fixed > is_black > base`; cages in'\nif old1 in content:\n    print\\('FOUND chunk 1'\\)\n    content = content\\.replace\\(old1, new1, 1\\)\nelse:\n    print\\('NOT FOUND chunk 1'\\)\n\nold2 = 'also checks cage sums; `_KillerCage`'\nnew2 = 'also checks cage sums \\(\\*\\*inline in `GameController\\.is_complete`\\*\\* \\\\u2014 after `validate\\(\\)` passes, if `self\\._meta\\.name == Variant\\.KILLER` iterate cage targets; `solver\\.validate\\(\\)` not extended; R5 Q5, Option A\\); `_KillerCage`'\nif old2 in content:\n    print\\('FOUND chunk 2'\\)\n    content = content\\.replace\\(old2, new2, 1\\)\nelse:\n    print\\('NOT FOUND chunk 2'\\)\n    idx = content\\.find\\('also checks cage sums'\\)\n    if idx >= 0:\n        print\\(repr\\(content\\[idx:idx\\+60\\]\\)\\)\n\nopen\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', 'w', encoding='utf-8'\\)\\.write\\(content\\)\nprint\\('done'\\)\nEOF\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\$script = @'\ncontent = open\\(r\"c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan\", encoding=\"utf-8\"\\)\\.read\\(\\)\n\nold1 = \"conflict detection extended; cage member highlight on selection; cages in\"\nnew1 = \"conflict detection extended; cage member highlight on selection \\\\u2014 `cage_member_bg` tint sits between `peer` and `fixed` in `_draw_board` chain \\(R5 Q3, Option A\\): `selected > conflict > peer > cage_member > fixed > is_black > base`; cages in\"\nif old1 in content:\n    print\\(\"FOUND chunk 1\"\\)\n    content = content\\.replace\\(old1, new1, 1\\)\nelse:\n    print\\(\"NOT FOUND chunk 1\"\\)\n\nold2 = \"also checks cage sums; `_KillerCage`\"\nnew2 = \"also checks cage sums \\(\\*\\*inline in `GameController\\.is_complete`\\*\\* \\\\u2014 after `validate\\(\\)` passes, if `self\\._meta\\.name == Variant\\.KILLER` iterate cage targets; `solver\\.validate\\(\\)` not extended; R5 Q5, Option A\\); `_KillerCage`\"\nif old2 in content:\n    print\\(\"FOUND chunk 2\"\\)\n    content = content\\.replace\\(old2, new2, 1\\)\nelse:\n    print\\(\"NOT FOUND chunk 2\"\\)\n    idx = content\\.find\\(\"also checks cage sums\"\\)\n    if idx >= 0:\n        print\\(repr\\(content\\[idx:idx\\+60\\]\\)\\)\n\nopen\\(r\"c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan\", \"w\", encoding=\"utf-8\"\\)\\.write\\(content\\)\nprint\\(\"done\"\\)\n'@\n\\$script \\| python$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\_fix_plan\\.py$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nidx = content\\.find\\('cage member highlight on selection'\\)\nprint\\(repr\\(content\\[idx:idx\\+200\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nidx = content\\.find\\('\\*\\*Killer\\*\\*'\\)\nprint\\(repr\\(content\\[idx:idx\\+1100\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\ncontent = open\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan', encoding='utf-8'\\)\\.read\\(\\)\nidx = content\\.find\\('cage member highlight on selection'\\)\nprint\\(repr\\(content\\[idx:idx\\+300\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\ntext = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\\.read_text\\(encoding='utf-8'\\)\nidx = text\\.find\\('SE permutation cap'\\)\nprint\\(repr\\(text\\[idx-20:idx\\+80\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\npath = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\ntext = path\\.read_text\\(encoding='utf-8'\\)\nold = 'SE permutation cap \\(default 10\\\\u202f000\\); cage sum overlay'\nnew = 'SE permutation cap \\(default 10\\\\u202f000\\); on reaching cap return \\\\`\\[grid\\.candidates\\[r\\]\\[c\\]\\.copy\\(\\) for \\(r,c\\) in cells\\]\\\\`\\\\u2014safe, preserves narrowed candidates \\(R6 Q4, Option C\\); cage sum overlay'\nassert old in text, 'NOT FOUND'\nupdated = text\\.replace\\(old, new, 1\\)\npath\\.write_text\\(updated, encoding='utf-8'\\)\nprint\\('OK, replaced', text\\.count\\(old\\), 'occurrence\\(s\\)'\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\ntext = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\\.read_text\\(encoding='utf-8'\\)\nidx = text\\.find\\('JigsawWorker\\.cancel'\\)\nprint\\(repr\\(text\\[idx:idx\\+120\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\ntext = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\\.read_text\\(encoding='utf-8'\\)\nfor q in \\['R6 Q1','R6 Q2','R6 Q3a','R6 Q3b','R6 Q4','R6 Q5','R6 Q6','R6 Q7','R6 Q8','R6 Q9','R6 Q10'\\]:\n    print\\(q, 'FOUND' if q in text else 'MISSING'\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\ntext = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\\.read_text\\(encoding='utf-8'\\)\nprint\\('variant_generators\\.py' in text\\)\n# Also check with the label text\nprint\\('Option C' in text\\)\n# Find how many times 'variant_generators' appears\nprint\\(text\\.count\\('variant_generators'\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\ntext = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\\.read_text\\(encoding='utf-8'\\)\nidx = text\\.find\\('1 000 recursive calls\\) for Jigsaw'\\)\nprint\\(repr\\(text\\[idx-30:idx\\+100\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\ntext = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\\.read_text\\(encoding='utf-8'\\)\nidx = text\\.find\\('all existing positional call sites require zero changes'\\)\nprint\\(repr\\(text\\[idx:idx\\+200\\]\\)\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nimport pathlib\npath = pathlib\\.Path\\(r'c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\speckit\\.plan'\\)\ntext = path\\.read_text\\(encoding='utf-8'\\)\nold = 'Str8ts and Killer each register a callback in the variant registry\\.\\\\n- Extend'\nnew = 'Str8ts and Killer each register a callback in the variant registry\\.\\\\n- Create \\\\`solver/variant_generators\\.py\\\\` housing \\\\`JigsawRegionGenerator\\\\`, \\\\`Str8tsMaskGenerator\\\\`, and \\\\`CagePartitioner\\\\` as co-located classes; imported by \\\\`generator\\.py\\\\` and \\\\`new_game_dialog\\.py\\\\` as needed\\. \\(R6 Q6, Option C\\)\\\\n- Extend'\ncount = text\\.count\\(old\\)\nprint\\('matches:', count\\)\nif count == 1:\n    path\\.write_text\\(text\\.replace\\(old, new, 1\\), encoding='utf-8'\\)\n    print\\('DONE'\\)\n\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -x --tb=short 2>&1 \\| head -120$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -x --tb=short 2>&1 \\| Select-Object -First 120$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -x --tb=short 2>&1 \\| Select-Object -First 60$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -x --tb=short 2>&1 \\| Select-Object -Last 40$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_services\\.py::TestUpdateAllCandidatesVariantFilters -x --tb=short 2>&1 \\| tail -20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_services\\.py::TestUpdateAllCandidatesVariantFilters -x --tb=short 2>&1 \\| Select-Object -Last 20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -x --tb=short 2>&1 \\| Select-Object -Last 40$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ --tb=short 2>&1 \\| Select-Object -Last 30$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -q 2>&1 \\| Select-Object -Last 15$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -q --no-header 2>&1 \\| Select-Object -Last 10$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ --no-header -q 2>&1 \\| Select-Object -First 5$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_services\\.py --collect-only -q 2>&1 \\| Select-String \"TestUpdateAll\" \\| Select-Object -First 10$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -x --tb=short -q 2>&1 \\| Out-String \\| Select-String \"passed\\|failed\\|error\\|FAILED\\|ERROR\" \\| Select-Object -First 10$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ --collect-only -q 2>&1 \\| Select-String \"selected\\|error\\|import\" \\| Select-Object -First 10$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom richards_sudoku\\.model\\.types import Board, Variant, VariantMetadata\nfrom richards_sudoku\\.services\\.candidates import update_all_candidates, _can_fit_in_line\n\ndef _str8ts_meta_with_black\\(black_cells\\):\n    meta = VariantMetadata\\.standard_9x9\\(\\)\n    return VariantMetadata\\(\n        name=Variant\\.STR8TS, size=9, symbols=list\\(range\\(1, 10\\)\\),\n        region_layout=meta\\.region_layout,\n        constraints=\\{'black_cells': list\\(black_cells\\)\\},\n    \\)\n\nblack_cells = \\[\\(0, c\\) for c in range\\(2, 9\\)\\] \\+ \\[\\(r, 1\\) for r in range\\(2, 9\\)\\]\nmeta = _str8ts_meta_with_black\\(black_cells\\)\nboard = Board\\(size=9, variant=Variant\\.STR8TS\\)\nfor pos in black_cells:\n    board\\.cell\\(\\*pos\\)\\.is_black = True\nboard\\.cell\\(0, 0\\)\\.value = 1\nboard\\.cell\\(1, 1\\)\\.value = 1\nupdate_all_candidates\\(board, meta\\)\ncands = board\\.cell\\(0, 1\\)\\.candidates\nprint\\('cands for \\(0,1\\):', sorted\\(cands\\)\\)\nprint\\('9 in cands:', 9 in cands\\)\n\n# Trace the filter:\nblack_set = \\{\\(int\\(p\\[0\\]\\), int\\(p\\[1\\]\\)\\) for p in meta\\.constraints\\['black_cells'\\]\\}\nprint\\('black_set size:', len\\(black_set\\)\\)\nprint\\('\\(0,1\\) in black_set:', \\(0,1\\) in black_set\\)\nok_row = _can_fit_in_line\\(board, 0, 1, 9, 9, black_set, axis='row'\\)\nok_col = _can_fit_in_line\\(board, 0, 1, 9, 9, black_set, axis='col'\\)\nprint\\('ok_row:', ok_row, 'ok_col:', ok_col\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"from richards_sudoku\\.services\\.candidates import _can_fit_in_line; print\\('import ok'\\)\" 2>&1 \\| Select-Object -Last 5$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python debug_str8ts\\.py 2>&1 \\| Select-Object -Last 20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"Tee-Object": true,
+			"/^python \"c:\\\\Users\\\\richardi\\\\richards_sudoku\\\\debug_str8ts\\.py\" 2>&1 \\| Tee-Object -FilePath \"c:\\\\Users\\\\richardi\\\\debug_result\\.txt\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"rsudoku\\Scripts\\python.exe": true,
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/test_one_to_25\\.py -x -v --ignore-glob=\"\\*ui\\*\" -k \"not qt and not UISmoke and not Uniqueness\" 2>&1 \\| Select-Object -First 60$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/test_one_to_25\\.py -v -k \"not qt and not UISmoke and not Uniqueness\" --tb=short 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_one_to_25\\.py -v -k \"not qt and not UISmoke and not Uniqueness\" --tb=short 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -v -k \"not qt and not UISmoke and not Uniqueness\" --tb=short -q 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -k \"not qt and not UISmoke and not Uniqueness\" --tb=short -q 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -k \"not qt and not UISmoke and not Uniqueness\" -q --tb=short 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_batch_j\\.py -v -k \"not qt\" --tb=short 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_batch_j\\.py -v -k \"qt\" --tb=short 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -k \"not Uniqueness\" -q --tb=short 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"import richards_sudoku\\.solver\\.variant_generators as vg; print\\(\\[x for x in dir\\(vg\\) if not x\\.startswith\\('_'\\)\\]\\)\" 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -k \"not Uniqueness\" -q --tb=short 2>&1 \\| tail -20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -k \"not Uniqueness\" -q --tb=short 2>&1 \\| Select-Object -Last 20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -k \"not Uniqueness\" -q --tb=short 2>&1 \\| Select-Object -Last 15$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/test_codewords\\.py -v --tb=short 2>&1 \\| Select-Object -Last 50$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/test_codewords\\.py -v --tb=short 2>&1 \\| Select-Object -Last 40$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -k \"not Uniqueness\" -q --tb=short 2>&1 \\| Select-Object -Last 10$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/ -x -q --ignore=tests/test_ui_shell\\.py -k \"not Uniqueness\" 2>&1 \\| tail -20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -x -q --ignore=tests/test_ui_shell\\.py -k \"not Uniqueness\" 2>&1 \\| Select-Object -Last 20$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -x -q --ignore=tests/test_ui_shell\\.py -k \"not Uniqueness\" 2>&1 \\| Select-Object -Last 10$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -q -k \"not Uniqueness\" 2>&1 \\| Select-Object -Last 5$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"start": true,
+			".\\rsudoku\\Scripts\\richards-sudoku.exe": true,
+			"Get-Process": true,
+			"Test-Path": true,
+			"t[\\\"givens\\\"]": true,
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\Activate\\.ps1 ; python -m pytest tests/test_model_types\\.py -v 2>&1$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"from richards_sudoku\\.solver\\.generator import GenerationCancelled, check_unique; print\\('OK'\\)\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"pytest": true,
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\activate\\.ps1 ; python -m pytest tests/test_kakuro\\.py -x -q --tb=short 2>&1 \\| Select-Object -First 80$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import KakuroTemplateLibrary, _kakuro_run_lengths, _kakuro_extract_runs\nimport random\n\n# Trace what's happening\nsize = 9\nlib = KakuroTemplateLibrary\\(size, seed=0, difficulty='medium'\\)\nlo, hi = lib\\._density_lo, lib\\._density_hi\nprint\\(f'Density band: \\[\\{lo:\\.2f\\}, \\{hi:\\.2f\\}\\]'\\)\n\nrng = random\\.Random\\(0\\)\nblack = set\\(\\)\nfor i in range\\(size\\):\n    black\\.add\\(\\(0, i\\)\\)\n    black\\.add\\(\\(i, 0\\)\\)\n\nall_interior = \\[\\(r, c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\nn_interior = len\\(all_interior\\)\nmid_density = \\(lo \\+ hi\\) / 2\\.0\nn_black_interior = max\\(0, round\\(n_interior \\* \\(1\\.0 - mid_density\\)\\)\\)\nprint\\(f'n_interior=\\{n_interior\\}, target black interior=\\{n_black_interior\\}'\\)\n\nshuffled = all_interior\\[:\\]\nrng\\.shuffle\\(shuffled\\)\nfor cell in shuffled\\[:n_black_interior\\]:\n    black\\.add\\(cell\\)\n\nwhite_before = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\nprint\\(f'White before fixup: \\{len\\(white_before\\)\\} of \\{n_interior\\} = density \\{len\\(white_before\\)/n_interior:\\.2f\\}'\\)\n\n# Fix run lengths\nchanged = True\niters = 0\nwhile changed:\n    changed = False\n    for r, c in all_interior:\n        if \\(r, c\\) in black:\n            continue\n        alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n        if alen < 2 or dlen < 2:\n            black\\.add\\(\\(r, c\\)\\)\n            changed = True\n    iters \\+= 1\n\nwhite_after = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\nprint\\(f'White after fixup \\(\\{iters\\} iters\\): \\{len\\(white_after\\)\\} = density \\{len\\(white_after\\)/n_interior:\\.2f\\}'\\)\ndensity = len\\(white_after\\) / n_interior\nprint\\(f'Density in \\[\\{lo:\\.2f\\},\\{hi:\\.2f\\}\\]: \\{lo <= density <= hi\\}'\\)\n\n# Check connectivity\nif white_after:\n    from collections import deque\n    ws = set\\(white_after\\)\n    visited = \\{white_after\\[0\\]\\}\n    q = deque\\(\\[white_after\\[0\\]\\]\\)\n    while q:\n        r, c = q\\.popleft\\(\\)\n        for dr, dc in \\(\\(-1,0\\),\\(1,0\\),\\(0,-1\\),\\(0,1\\)\\):\n            nb = \\(r\\+dr, c\\+dc\\)\n            if nb in ws and nb not in visited:\n                visited\\.add\\(nb\\)\n                q\\.append\\(nb\\)\n    print\\(f'Connected: \\{len\\(visited\\)==len\\(white_after\\)\\} \\(\\{len\\(visited\\)\\} of \\{len\\(white_after\\)\\}\\)'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import _kakuro_run_lengths, _kakuro_extract_runs\nimport random\n\ndef try_density\\(start_density, size=9, seed=0\\):\n    all_interior = \\[\\(r, c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\n    n_interior = len\\(all_interior\\)\n    rng = random\\.Random\\(seed\\)\n    black = set\\(\\)\n    for i in range\\(size\\):\n        black\\.add\\(\\(0, i\\)\\); black\\.add\\(\\(i, 0\\)\\)\n    n_black_interior = max\\(0, round\\(n_interior \\* \\(1\\.0 - start_density\\)\\)\\)\n    shuffled = all_interior\\[:\\]\n    rng\\.shuffle\\(shuffled\\)\n    for cell in shuffled\\[:n_black_interior\\]:\n        black\\.add\\(cell\\)\n    changed = True\n    while changed:\n        changed = False\n        for r, c in all_interior:\n            if \\(r, c\\) in black: continue\n            alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n            if alen < 2 or dlen < 2:\n                black\\.add\\(\\(r, c\\)\\)\n                changed = True\n    white = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n    return len\\(white\\)/n_interior\n\nfor sd in \\[0\\.50, 0\\.60, 0\\.70, 0\\.75, 0\\.80, 0\\.85, 0\\.90\\]:\n    results = \\[try_density\\(sd, seed=s\\) for s in range\\(20\\)\\]\n    print\\(f'start=\\{sd:\\.2f\\}: min=\\{min\\(results\\):\\.2f\\} max=\\{max\\(results\\):\\.2f\\} mean=\\{sum\\(results\\)/len\\(results\\):\\.2f\\}'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import _kakuro_run_lengths, _kakuro_extract_runs\nimport random\nfrom collections import deque\n\ndef gen_row_pattern\\(n, rng, target_density\\):\n    '''Generate n booleans with white runs of length 2-9\\.'''\n    pattern = \\[False\\] \\* n\n    col = 0\n    while col < n:\n        rem = n - col\n        if rem < 2:\n            break\n        if rng\\.random\\(\\) < target_density \\* 1\\.8:\n            run_len = rng\\.randint\\(2, min\\(9, rem\\)\\)\n            for j in range\\(col, col \\+ run_len\\):\n                pattern\\[j\\] = True\n            col \\+= run_len\n            if col < n:\n                col \\+= rng\\.randint\\(1, min\\(2, n - col\\)\\)\n        else:\n            col \\+= 1\n    return pattern\n\ndef is_connected\\(white_cells\\):\n    if not white_cells: return False\n    ws = set\\(white_cells\\)\n    visited = \\{white_cells\\[0\\]\\}\n    q = deque\\(\\[white_cells\\[0\\]\\]\\)\n    while q:\n        r, c = q\\.popleft\\(\\)\n        for dr, dc in \\(\\(-1,0\\),\\(1,0\\),\\(0,-1\\),\\(0,1\\)\\):\n            nb = \\(r\\+dr, c\\+dc\\)\n            if nb in ws and nb not in visited:\n                visited\\.add\\(nb\\)\n                q\\.append\\(nb\\)\n    return len\\(visited\\) == len\\(white_cells\\)\n\ndef try_row_valid\\(seed, size=9, lo=0\\.40, hi=0\\.55\\):\n    all_interior = \\[\\(r, c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\n    n_interior = len\\(all_interior\\)\n    rng = random\\.Random\\(seed\\)\n    black = set\\(\\)\n    for i in range\\(size\\):\n        black\\.add\\(\\(0, i\\)\\); black\\.add\\(\\(i, 0\\)\\)\n    target = \\(lo \\+ hi\\) / 2\\.0\n    for r in range\\(1, size\\):\n        pattern = gen_row_pattern\\(size - 1, rng, target\\)\n        for j, white in enumerate\\(pattern\\):\n            if not white:\n                black\\.add\\(\\(r, j \\+ 1\\)\\)\n    white_before = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n    d_before = len\\(white_before\\)/n_interior\n    # Fix cascade\n    changed = True\n    while changed:\n        changed = False\n        for r, c in all_interior:\n            if \\(r, c\\) in black: continue\n            alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n            if alen < 2 or dlen < 2:\n                black\\.add\\(\\(r, c\\)\\)\n                changed = True\n    white_after = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n    d_after = len\\(white_after\\)/n_interior\n    ok = lo <= d_after <= hi and is_connected\\(white_after\\)\n    return d_before, d_after, ok\n\nresults = \\[try_row_valid\\(s\\) for s in range\\(50\\)\\]\nsuccesses = sum\\(1 for _, _, ok in results if ok\\)\ndensities = \\[d for _, d, _ in results\\]\nprint\\(f'Success rate: \\{successes\\}/50 = \\{successes/50:\\.0%\\}'\\)\nprint\\(f'Final density: min=\\{min\\(densities\\):\\.2f\\}, max=\\{max\\(densities\\):\\.2f\\}, mean=\\{sum\\(densities\\)/len\\(densities\\):\\.2f\\}'\\)\nprint\\(f'Initial density: min=\\{min\\(d for d,_,_ in results\\):\\.2f\\}, max=\\{max\\(d for d,_,_ in results\\):\\.2f\\}'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import _kakuro_run_lengths, _kakuro_extract_runs\nimport random\nfrom collections import deque\n\ndef gen_row_pattern\\(n, rng, target_density\\):\n    pattern = \\[False\\] \\* n\n    col = 0\n    while col < n:\n        rem = n - col\n        if rem < 2: break\n        if rng\\.random\\(\\) < target_density \\* 1\\.8:\n            run_len = rng\\.randint\\(2, min\\(9, rem\\)\\)\n            for j in range\\(col, col \\+ run_len\\):\n                pattern\\[j\\] = True\n            col \\+= run_len\n            if col < n:\n                col \\+= rng\\.randint\\(1, min\\(2, n - col\\)\\)\n        else:\n            col \\+= 1\n    return pattern\n\ndef is_connected\\(white_cells\\):\n    if not white_cells: return False\n    ws = set\\(white_cells\\)\n    visited = \\{white_cells\\[0\\]\\}\n    q = deque\\(\\[white_cells\\[0\\]\\]\\)\n    while q:\n        r, c = q\\.popleft\\(\\)\n        for dr, dc in \\(\\(-1,0\\),\\(1,0\\),\\(0,-1\\),\\(0,1\\)\\):\n            nb = \\(r\\+dr, c\\+dc\\)\n            if nb in ws and nb not in visited:\n                visited\\.add\\(nb\\)\n                q\\.append\\(nb\\)\n    return len\\(visited\\) == len\\(white_cells\\)\n\ndef try_row_valid\\(seed, size=9, lo=0\\.40, hi=0\\.55\\):\n    all_interior = \\[\\(r, c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\n    n_interior = len\\(all_interior\\)\n    rng = random\\.Random\\(seed\\)\n    black = set\\(\\)\n    for i in range\\(size\\):\n        black\\.add\\(\\(0, i\\)\\); black\\.add\\(\\(i, 0\\)\\)\n    target = \\(lo \\+ hi\\) / 2\\.0\n    for r in range\\(1, size\\):\n        pattern = gen_row_pattern\\(size - 1, rng, target\\)\n        for j, white in enumerate\\(pattern\\):\n            if not white:\n                black\\.add\\(\\(r, j \\+ 1\\)\\)\n    white_before = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n    d_before = len\\(white_before\\)/n_interior\n    changed = True\n    while changed:\n        changed = False\n        for r, c in all_interior:\n            if \\(r, c\\) in black: continue\n            alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n            if alen < 2 or dlen < 2:\n                black\\.add\\(\\(r, c\\)\\)\n                changed = True\n    white_after = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n    d_after = len\\(white_after\\)/n_interior\n    conn = is_connected\\(white_after\\) if white_after else False\n    in_band = lo <= d_after <= hi\n    return d_before, d_after, in_band, conn, in_band and conn\n\nresults = \\[try_row_valid\\(s\\) for s in range\\(100\\)\\]\nsuccesses = sum\\(1 for \\*_, ok in results if ok\\)\nn_density = sum\\(1 for _, d, ib, \\*_ in results if ib\\)\nn_conn = sum\\(1 for _, d, ib, conn, _ in results if conn\\)\nprint\\(f'Success: \\{successes\\}/100, density OK: \\{n_density\\}/100, connected: \\{n_conn\\}/100'\\)\nprint\\(f'Density: min=\\{min\\(d for _,d,\\*_ in results\\):\\.2f\\}, max=\\{max\\(d for _,d,\\*_ in results\\):\\.2f\\}, mean=\\{sum\\(d for _,d,\\*_ in results\\)/100:\\.2f\\}'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import _kakuro_run_lengths\nimport random\nfrom collections import deque\n\ndef is_connected\\(white_cells\\):\n    if not white_cells: return False\n    ws = set\\(white_cells\\)\n    visited = \\{white_cells\\[0\\]\\}\n    q = deque\\(\\[white_cells\\[0\\]\\]\\)\n    while q:\n        r, c = q\\.popleft\\(\\)\n        for dr, dc in \\(\\(-1,0\\),\\(1,0\\),\\(0,-1\\),\\(0,1\\)\\):\n            nb = \\(r\\+dr, c\\+dc\\)\n            if nb in ws and nb not in visited:\n                visited\\.add\\(nb\\)\n                q\\.append\\(nb\\)\n    return len\\(visited\\) == len\\(white_cells\\)\n\ndef try_start_density\\(start, seed, size=9, lo=0\\.40, hi=0\\.55\\):\n    all_interior = \\[\\(r, c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\n    n_interior = len\\(all_interior\\)\n    rng = random\\.Random\\(seed\\)\n    black = set\\(\\)\n    for i in range\\(size\\):\n        black\\.add\\(\\(0, i\\)\\); black\\.add\\(\\(i, 0\\)\\)\n    n_black_interior = max\\(0, round\\(n_interior \\* \\(1\\.0 - start\\)\\)\\)\n    shuffled = all_interior\\[:\\]\n    rng\\.shuffle\\(shuffled\\)\n    for cell in shuffled\\[:n_black_interior\\]:\n        black\\.add\\(cell\\)\n    changed = True\n    while changed:\n        changed = False\n        for r, c in all_interior:\n            if \\(r, c\\) in black: continue\n            alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n            if alen < 2 or dlen < 2:\n                black\\.add\\(\\(r, c\\)\\)\n                changed = True\n    white = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n    d = len\\(white\\)/n_interior\n    ok = lo <= d <= hi and bool\\(white\\) and is_connected\\(white\\)\n    return ok\n\n# Test with start=0\\.70, 0\\.75, 0\\.80 over 300 seeds\nfor start in \\[0\\.70, 0\\.75, 0\\.80\\]:\n    successes = sum\\(1 for s in range\\(300\\) if try_start_density\\(start, s\\)\\)\n    print\\(f'start=\\{start\\}: \\{successes\\}/300 pass = \\{successes/300:\\.1%\\} -- expected tries to first success: \\{300/max\\(1,successes\\):\\.0f\\}'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import _kakuro_run_lengths\nimport random\nfrom collections import deque\n\ndef is_connected\\(white_cells\\):\n    if not white_cells: return False\n    ws = set\\(white_cells\\)\n    visited = \\{white_cells\\[0\\]\\}; q = deque\\(\\[white_cells\\[0\\]\\]\\)\n    while q:\n        r, c = q\\.popleft\\(\\)\n        for dr, dc in \\(\\(-1,0\\),\\(1,0\\),\\(0,-1\\),\\(0,1\\)\\):\n            nb = \\(r\\+dr, c\\+dc\\)\n            if nb in ws and nb not in visited:\n                visited\\.add\\(nb\\); q\\.append\\(nb\\)\n    return len\\(visited\\) == len\\(white_cells\\)\n\ndef count_passing\\(start, lo, hi, n=200, size=9\\):\n    all_interior = \\[\\(r, c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\n    n_interior = len\\(all_interior\\)\n    good = 0\n    for seed in range\\(n\\):\n        rng = random\\.Random\\(seed\\)\n        black = set\\(\\)\n        for i in range\\(size\\):\n            black\\.add\\(\\(0, i\\)\\); black\\.add\\(\\(i, 0\\)\\)\n        n_black = max\\(0, round\\(n_interior \\* \\(1\\.0 - start\\)\\)\\)\n        shuffled = all_interior\\[:\\]; rng\\.shuffle\\(shuffled\\)\n        for cell in shuffled\\[:n_black\\]: black\\.add\\(cell\\)\n        changed = True\n        while changed:\n            changed = False\n            for r, c in all_interior:\n                if \\(r, c\\) in black: continue\n                alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n                if alen < 2 or dlen < 2:\n                    black\\.add\\(\\(r, c\\)\\); changed = True\n        white = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n        d = len\\(white\\)/n_interior\n        if lo <= d <= hi and white and is_connected\\(white\\): good \\+= 1\n    return good\n\nbands = \\{'easy':\\(0\\.50,0\\.65\\), 'medium':\\(0\\.40,0\\.55\\), 'hard':\\(0\\.30,0\\.45\\), 'expert':\\(0\\.25,0\\.40\\)\\}\nfor diff, \\(lo, hi\\) in bands\\.items\\(\\):\n    best_start = None; best_count = 0\n    for start_10 in range\\(65, 91, 5\\):\n        start = start_10 / 100\n        c = count_passing\\(start, lo, hi\\)\n        if c > best_count:\n            best_count, best_start = c, start\n        print\\(f'  \\{diff\\} lo=\\{lo\\} hi=\\{hi\\} start=\\{start\\}: \\{c\\}/200'\\)\n    print\\(f'  => BEST: \\{diff\\} at start=\\{best_start\\} \\(\\{best_count\\}/200=\\{best_count/200:\\.0%\\}\\)'\\)\n    print\\(\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"\nfrom src\\.richards_sudoku\\.solver\\.variant_generators import _kakuro_run_lengths\nimport random\nfrom collections import deque\n\ndef is_connected\\(white_cells\\):\n    if not white_cells: return False\n    ws = set\\(white_cells\\)\n    visited = \\{white_cells\\[0\\]\\}; q = deque\\(\\[white_cells\\[0\\]\\]\\)\n    while q:\n        r, c = q\\.popleft\\(\\)\n        for dr, dc in \\(\\(-1,0\\),\\(1,0\\),\\(0,-1\\),\\(0,1\\)\\):\n            nb = \\(r\\+dr, c\\+dc\\)\n            if nb in ws and nb not in visited:\n                visited\\.add\\(nb\\); q\\.append\\(nb\\)\n    return len\\(visited\\) == len\\(white_cells\\)\n\ndef simulate_generate\\(seed, lo, hi, start_lo=0\\.65, start_hi=0\\.80, max_attempts=300, size=9\\):\n    all_interior = \\[\\(r,c\\) for r in range\\(1, size\\) for c in range\\(1, size\\)\\]\n    n_interior = len\\(all_interior\\)\n    for attempt in range\\(max_attempts\\):\n        rng = random\\.Random\\(seed \\+ attempt\\)\n        start = rng\\.uniform\\(start_lo, start_hi\\)\n        black = set\\(\\)\n        for i in range\\(size\\):\n            black\\.add\\(\\(0, i\\)\\); black\\.add\\(\\(i, 0\\)\\)\n        n_black = max\\(0, round\\(n_interior \\* \\(1\\.0 - start\\)\\)\\)\n        shuffled = all_interior\\[:\\]; rng\\.shuffle\\(shuffled\\)\n        for cell in shuffled\\[:n_black\\]: black\\.add\\(cell\\)\n        changed = True\n        while changed:\n            changed = False\n            for r, c in all_interior:\n                if \\(r, c\\) in black: continue\n                alen, dlen = _kakuro_run_lengths\\(r, c, black, size\\)\n                if alen < 2 or dlen < 2:\n                    black\\.add\\(\\(r, c\\)\\); changed = True\n        white = \\[\\(r,c\\) for r,c in all_interior if \\(r,c\\) not in black\\]\n        if not white: continue\n        d = len\\(white\\)/n_interior\n        if not \\(lo <= d <= hi\\): continue\n        if not is_connected\\(white\\): continue\n        return attempt \\+ 1\n    return None\n\nbands = \\{'easy':\\(0\\.50,0\\.65\\), 'medium':\\(0\\.40,0\\.55\\), 'hard':\\(0\\.30,0\\.45\\), 'expert':\\(0\\.25,0\\.40\\)\\}\nfor diff, \\(lo, hi\\) in bands\\.items\\(\\):\n    results = \\[simulate_generate\\(s, lo, hi\\) for s in range\\(100\\)\\]\n    successes = \\[r for r in results if r is not None\\]\n    if successes:\n        avg = sum\\(successes\\)/len\\(successes\\)\n        print\\(f'\\{diff\\}: \\{len\\(successes\\)\\}/100 succeed, avg attempts=\\{avg:\\.1f\\}, max=\\{max\\(successes\\)\\}'\\)\n    else:\n        print\\(f'\\{diff\\}: NONE succeeded'\\)\n\"\n$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^\\.\\\\rsudoku\\\\Scripts\\\\activate\\.ps1 ; python -m pytest tests/test_kakuro\\.py -v --tb=short 2>&1 \\| Select-Object -First 50$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_kakuro\\.py -v --tb=long 2>&1 \\| Select-Object -First 200$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_kakuro\\.py -v --tb=short -k \"IsComplete or Persistence or import_rejects\" 2>&1 \\| Select-Object -First 150$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_kakuro\\.py -v --tb=short 2>&1 \\| tail -30$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_kakuro\\.py -v --tb=short 2>&1 \\| Select-Object -Last 40$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/test_kakuro\\.py -v --tb=short 2>&1 \\| Select-Object -Last 15$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -q --tb=short 2>&1 \\| Select-Object -Last 30$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -m pytest tests/ -q --tb=short 2>&1 \\| Select-Object -Last 15$/": {
+				"approve": true,
+				"matchCommandLine": true
+			}
 		}
 	}
 }

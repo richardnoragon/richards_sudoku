@@ -1,15 +1,17 @@
 # speckit Constitution: richards_sudoku
 
 ## Code Quality
-- Preserve modular boundaries: generation, solving, UI, persistence, and statistics must remain decoupled with clear interfaces and no cross-layer side effects.
-- Enforce readability: prefer explicit logic over clever shortcuts; include concise comments only for non-obvious algorithms (solver, generator, jigsaw/Str8ts rules).
+- Preserve modular boundaries: generation, solving, UI, persistence, statistics, and SE difficulty grading must remain decoupled with clear interfaces and no cross-layer side effects.
+- Enforce readability: prefer explicit logic over clever shortcuts; include concise comments only for non-obvious algorithms (solver, generator, SE technique logic, jigsaw/Str8ts/Killer rules).
 - Use typing and validation: type-hint public functions, validate inputs for puzzle size/variant, and fail fast on invalid states.
-- Serialization discipline: JSON save/load/import/export must be versioned and backward compatible; reject malformed payloads safely.
+- Serialization discipline: JSON save/load/import/export must be versioned and backward compatible; reject malformed payloads safely. Schema version must be incremented whenever the save format gains new fields (e.g. `se_score`/`se_label`).
 - Determinism for reproducibility: generators accept seeds; solver behavior remains stable across runs and OSes.
+- SE engine extensibility: adding a new solving technique requires only (a) implementing a class with a `name`, `weight`, and `apply(grid) -> bool` interface and (b) inserting it into `_TECHNIQUES` at the correct weight position — no other changes needed. Never hardcode technique count or weight values outside `difficulty_se.py`.
 
 ## Testing Standards
-- Unit tests cover solver correctness, generator validity (unique/solvable), persistence round-trips (save -> load), and stats tracking (timer/moves/hints).
-- Property-based or scenario suites exercise multiple grid sizes and variants (Standard, Jigsaw, Str8ts, 1–25) with conflict/constraint checks.
+- Unit tests cover solver correctness, generator validity (unique/solvable), persistence round-trips (save -> load, including se_score/se_label round-trip), and stats tracking (timer/moves/hints).
+- SE difficulty grader tests: boundary scores for `score_to_label`; `grade()` on known-difficulty fixtures; per-technique minimal fixture (one test per technique class); variant paths (Str8ts run, Killer cage); performance guard (< 100ms for 9×9).
+- Property-based or scenario suites exercise multiple grid sizes and variants (Standard, Jigsaw, Str8ts, Killer, 1–25, Codewords, KenKen, Kakuro) with conflict/constraint checks.
 - UI smoke tests verify grid rendering, selection, highlight behaviors, undo/redo, hint availability, and pencil mark visibility for each variant.
 - Regression harness for import/export: known fixtures must load, validate solvability, and remain playable end-to-end.
 - Performance guards: add tests/benchmarks for solver/runtime budgets to prevent slowdowns; enforce deterministic seeds in tests.

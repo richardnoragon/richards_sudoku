@@ -10,18 +10,263 @@
 - [x] Wire basic flow: new standard game -> generate -> render; edit -> undo/redo; save/load restores timer/stats/candidates.
 - [x] Tests: unit for solver/generator/persistence; pytest-qt smoke for grid render/select/undo/redo.
 
+## SukakuExplainer (SE) Difficulty Engine
+
+### Core Engine — COMPLETE
+- [x] Design and implement `_WorkingGrid`: mutable simulation copy seeded from `cell.is_fixed` clues only; tracks `values`, `candidates`, unit/peer maps, variant name and constraints.
+- [x] Implement `_build_unit_groups(size, region_layout)` → row/col/region unit lists.
+- [x] Implement `_build_peer_map(size, all_units)` → cell → frozenset-of-peers mapping.
+- [x] Implement shared elimination helpers: `_eliminate_from_unit`, `_reduce_cells_to`, `_elim_val_in_row_excl`, `_elim_val_in_col_excl`, `_elim_val_in_unit_excl`.
+- [x] Scoring algorithm: weighted average of step weights (sum / count), capped at 8.0; contradiction returns `(8.0, "Invalid")`; no-progress unsolved returns `(8.0, "Extreme")`; already solved returns `(0.0, "Unknown")`.
+- [x] Implement `score_to_label(score)` → Easy / Medium / Hard / Extreme / Unknown.
+- [x] Implement `grade(board, meta) -> (float, str)` public API: build `_WorkingGrid`, run technique loop, return score and label.
+
+### Technique Registry — COMPLETE (17 techniques)
+- [x] `_LastValue` (weight 1.0): place value when one empty cell remains in a unit.
+- [x] `_HiddenSingleBlock` (weight 1.2): hidden single in region units.
+- [x] `_HiddenSingleLinear` (weight 1.5): hidden single in row/col units.
+- [x] `_Str8tsRun` (weight 1.7): run-sequence elimination for Str8ts variant (`meta.constraints["black_cells"]`).
+- [x] `_KillerCage` (weight 1.9): cage-sum elimination for Killer variant (`meta.constraints["cages"]`); permutation enumeration per cage.
+- [x] `_NakedSingle` (weight 2.3): cell with exactly one candidate.
+- [x] `_Pointing` (weight 2.6): locked candidates region → row/col.
+- [x] `_Claiming` (weight 2.8): locked candidates row/col → region.
+- [x] `_NakedPair` (weight 3.0): naked subset of size 2 across all units.
+- [x] `_XWing` (weight 3.2): generalized fish degree 2 (row- and col-based).
+- [x] `_HiddenPair` (weight 3.4): hidden subset of size 2 across all units.
+- [x] `_NakedTriple` (weight 3.6): naked subset of size 3.
+- [x] `_Swordfish` (weight 3.8): generalized fish degree 3.
+- [x] `_HiddenTriple` (weight 4.0): hidden subset of size 3.
+- [x] `_NakedQuad` (weight 5.0): naked subset of size 4.
+- [x] `_Jellyfish` (weight 5.2): generalized fish degree 4.
+- [x] `_HiddenQuad` (weight 5.4): hidden subset of size 4.
+
+### SE Integration
+- [x] Wire `grade(board, meta)` into `GameController`: call after puzzle generation (new game) and after puzzle load; store result in `_se_rating`.
+- [x] Display SE score and label in PyQt6 status bar (`"SE: {label} ({score:.1f})"`); update on each new game / load event via `_refresh_difficulty_label()`.
+- [x] Expose `grade()` result in save/load JSON schema (`"se_score"`, `"se_label"` fields; schema version bump to 2); restore on load without recomputing.
+
+### SE Tests — COMPLETE
+- [x] Unit test `score_to_label`: boundary values (0.0, 2.0, 4.0, 6.0, 6.1, 8.0).
+- [x] Unit test `grade()` on a trivially pre-solved board → `(0.0, "Unknown")`.
+- [x] Unit test `grade()` on a contradictory board (duplicate fixed clue) → `(8.0, "Invalid")`.
+- [x] Unit test `grade()` on a minimal naked-single-only puzzle → score ≤ 2.0 (Easy).
+- [x] Unit test each technique fires on a hand-crafted minimal fixture (one test per technique class).
+- [x] Unit test Str8ts path: board with `black_cells` constraint reduces run candidates correctly.
+- [x] Unit test Killer path: board with `cages` constraint eliminates invalid cage values correctly.
+- [x] Regression test: grade a set of known-difficulty 9x9 puzzles and assert expected label.
+- [x] Performance test: `grade()` on a 9x9 puzzle completes in < 100ms.
+- [x] Performance test: Killer cage permutation on a cage of 5+ cells does not hang (cap or prune if needed).
+
+### SE Advanced Techniques — Future
+- [ ] `_XYWing` (weight ≈5.6): pivot `{X,Y}` + wings `{X,Z}/{Y,Z}`; eliminate Z from cells seeing both wings; add to `_TECHNIQUES` after `_HiddenQuad`.
+- [ ] `_XYZWing` (weight ≈5.8): pivot `{X,Y,Z}` + wings `{X,Z}/{Y,Z}`; eliminate Z from cells seeing all three; add to `_TECHNIQUES` after `_XYWing`.
+- [ ] `_UniqueRectangle` (weight ≈6.0–6.5): detect deadly pattern in 2×2 bi-value cells across two regions; restrict candidates to break ambiguity (types 1–4).
+- [ ] `_BUG` (weight ≈6.5): bivalue universal grave — all but one unsolved cell is bivalue; force placement of the extra candidate.
+- [ ] `_AlignedPairExclusion` (weight ≈6.5–7.0): pairwise constraint elimination across cells aligned in a unit.
+- [ ] `_ForcingChain` (weight ≈7.0+): assumption-based chain; detect contradiction to force value or elimination.
+- [ ] Calibrate weights against reference puzzle sets; adjust score thresholds if Easy/Medium/Hard/Extreme boundaries drift.
+
 ## Variants & Assistance (Beta)
-- Add variant registry and layouts (Jigsaw masks, Str8ts rules, 1–25 symbols); extend solver/generator per variant.
-- Difficulty heuristics per variant; ensure uniqueness/solvability per level.
-- Conflict highlighting across variants.
-- Import/export: JSON primary + text rows with headers (variant, size, seed, difficulty); validation; prompts for path.
-- Hint service: runtime-selectable modes (candidate, auto-fill cell, multi-cell reveal, walkthrough); tracking + limits.
-- Stats UI: moves/hints tracked; end-of-game summary dialog.
-- UI polish: variant/difficulty selectors, hint mode selector, status feedback; accessibility checks.
-- Tests: property/scenario across variants; fixtures for import/export; UI smoke for hint modes and variant parity.
+
+Tasks are grouped by implementation batch (see `speckit.plan` Batches A–I for dependency ordering and full file-level detail). Complete each batch before starting the next; Batches A and D have no dependencies and may start immediately.
+
+---
+
+### Batch A — Model & Enum  *(no dependencies)*
+
+- [x] **A1** `model/types.py`: rename `Variant.EXTENDED = "extended"` → `Variant.ONE_TO_25 = "1to25"` and add `Variant.KILLER = "killer"` to the enum. (`JIGSAW` and `STR8TS` are already present — no change needed there.) (R9 Q7)
+- [x] **A2** `model/types.py`: add `is_black: bool = False` field to `Cell` dataclass (after `is_fixed`). Update `Cell.to_dict()` to write `"is_black": self.is_black`, `Cell.from_dict()` to read `data.get("is_black", False)`, and `Cell.copy()` to pass through `is_black=self.is_black`. Also add `if cell.is_black: raise ValueError` guard to `Board.apply_move()` immediately after the existing `is_fixed` guard — this is the model-layer defence; `GameController._on_value_entered` (H3) and `keyPressEvent` (G5) supply the upper layers. `is_black = True` applies to **both Str8ts and Kakuro** black cells (R11 Q1, Option A) — the same A2 guard covers both; no additional Kakuro-specific model change is needed for black-cell protection.
+- [x] **A3** `model/types.py`: in `VariantMetadata.__post_init__`, add `if not self.region_layout: return` sentinel before the size/length validation block so an empty `region_layout=[]` is accepted as a pre-population stub (R8 Q1).
+- [x] **A4** `model/types.py`: in **both** `VariantMetadata.from_dict` and `Board.from_dict`, silently substitute `"extended"` → `"1to25"` before calling `Variant(...)`. No `DeprecationWarning`; no schema bump; existing saves load transparently (R9 Q7).
+- [x] **A5** Tests (`tests/test_model_types.py` — extend existing): `Variant.ONE_TO_25` and `Variant.KILLER` round-trip; `Cell.is_black` serialises/deserialises correctly; `VariantMetadata.__post_init__` accepts empty `region_layout`; `VariantMetadata.from_dict` with `"name": "extended"` yields `Variant.ONE_TO_25`; `Board.from_dict` with `"variant": "extended"` yields `Variant.ONE_TO_25`.
+
+---
+
+### Batch B — Generator Extensions  *(depends on A)*
+
+- [x] **B1** `solver/variant_generators.py` (new file): implement `JigsawRegionGenerator(size, seed, difficulty)` — iterative cell-swap + BFS connectivity; difficulty-scaled swap count; `.generate() -> list[list[int]]`.
+- [x] **B2** `solver/variant_generators.py`: implement `Str8tsMaskGenerator(size, seed, difficulty)` — point-symmetric seeded black-cell placement; canonical density values (VQ1 — spec authoritative over code): Easy 10 %, Medium 15 %, Hard 20 %, Expert 25 %; guarantee every straight segment has length ≥ 2 (R6 Q3a); `.generate() -> set[tuple[int,int]]`. `Str8tsWorker` calls this and writes result into `meta.constraints["black_cells"]` before passing `meta` to `generate_puzzle`; `generate_puzzle` only reads the mask (R8 Q3).
+- [x] **B3** `solver/variant_generators.py`: implement `CagePartitioner(size, seed, rng)` — flood-fill partitioning using the same `rng` instance already created for solution fill (R8 Q9); target cage size weighted by difficulty (≤ 5 cells); `.partition(solution) -> list[dict]` returning `{"cells": [(r,c),...], "sum": N}` dicts; accept optional `cancel_flag`.
+- [x] **B4** `solver/generator.py`: add keyword-only params to `_fill_grid` — `meta=None`, `constraint_ok=None`, `cancel_flag=None`. Check `cancel_flag[0]` every 1 000 calls; call `constraint_ok(meta, grid, r, c, val)` if not `None`, skip `val` if it returns `False`. Jigsaw passes `None` for `constraint_ok`; Str8ts and Killer register callbacks via the variant registry.
+- [x] **B5** `solver/generator.py`: add `cancel_flag=None` **and `constraint_ok=None`** to `_count_solutions`; check `cancel_flag[0]` every 1 000 calls; return `0` on cancel; pass `constraint_ok` into the backtracking loop so the uniqueness check is cage-aware for Killer (R5 Q4). Add `cancel_flag=None` and `constraint_ok=None` to `_has_unique_solution`; pass both through to `_count_solutions`. The parameter name in both `_has_unique_solution` and `_count_solutions` is `constraint_ok` throughout (no `validator` name anywhere); `validate_kakuro` is passed as `constraint_ok`; `check_unique` passes its own `constraint_ok` argument directly to `_has_unique_solution`'s `constraint_ok` parameter — no bridging rename. (R13 Q1, Option A) Also add a public `check_unique(meta: VariantMetadata, board_state: list[list[int]], constraint_ok: Callable | None = None, cancel_flag: list[bool] | None = None) -> bool` function that delegates to `_has_unique_solution`; this is the canonical entry point for complete-pipeline workers (`OneToTwentyFiveWorker`, `KenKenWorker`, `KakuroWorker`, `CodewordsWorker`) that bypass `generate_puzzle`. (R12 Q2, Option B) `_count_solutions` and `_has_unique_solution` already carry both params (confirmed in existing code); only the public `check_unique` wrapper remains. **Implementation scope (GQ-2, Option B)**: add `check_unique` now in Beta.
+- [x] **B6** `solver/generator.py`: add `meta=None`, `constraint_ok=None` to `generate_solution`; pass through to `_fill_grid`. All existing positional call sites remain compatible (R1 Q1 additive approach).
+- [x] **B7** `solver/generator.py`: add `meta=None`, `constraint_ok=None`, `cancel_flag=None` to `generate_puzzle`; Str8ts pre-processing; Killer skip-partition logic; raises `GenerationCancelled` on cancel.
+- [x] **B8** Tests (`tests/test_solver.py` extend; new `tests/test_variant_generators.py`): `JigsawRegionGenerator` produces exactly `size` connected regions each of `size` cells; `Str8tsMaskGenerator` density in range, no segment < 2; `CagePartitioner` full coverage, no overlap, sums correct; `generate_puzzle` with `cancel_flag=[True]` raises `GenerationCancelled`; Str8ts meta produces valid consecutive straights.
+
+---
+
+### Batch C — Services  *(depends on A)*
+
+- [x] **C1** `services/variant_registry.py` (new file): `REGISTRY: dict[Variant, dict]`; factories for STANDARD, JIGSAW, STR8TS, KILLER; constraint callbacks for STR8TS and KILLER. **Code gap (GQ-3, Option A)**: `REGISTRY[Variant.KILLER]` is missing the `"constraint_ok_factory"` key — add `"constraint_ok_factory": lambda meta: _killer_constraint_ok(meta.constraints["cages"])`; `GameController.new_game` also needs the two-branch lookup `factory = reg.get("constraint_ok_factory"); constraint_ok = factory(meta) if factory else reg.get("constraint_ok")`; implement both now in Beta.
+- [x] **C2** `services/str8ts_utils.py` (new file): implement `_can_extend_straight(placed: list[int], length: int, v: int) -> bool`
+- [x] **C3** `services/candidates.py`: add `is_black` guard, Str8ts straight filter, Killer sum-feasibility filter in `update_all_candidates`; also add KenKen cage arithmetic feasibility filter (per-cage `+`/`×`/`−`/`÷` operation check) (R11 Q2a, Option A) and Kakuro run-sum/no-repeat filter (per-run sum ceiling + unused-digit floor + intra-run duplicate exclusion) (R11 Q2b, Option A); rebuild peer cache inline on each call via `_build_peer_cache(meta.size, meta.region_layout, meta.constraints.get("has_box_regions", True))` to produce a correctly-shaped cache for KenKen (no box) and Kakuro (run-based), without storing peer cache on the model (R12 Q1, Option A); for Kakuro specifically, `update_all_candidates` has a Kakuro-specific early branch: when `meta.name == Variant.KAKURO` the standard `_build_peer_cache` call and peer-elimination step are skipped entirely — only the run-sum/no-repeat filter from `meta.constraints["clues"]` is applied (peers would incorrectly eliminate valid candidates since Kakuro has no global row/column uniqueness) (R15 Q3, Option A). **Implementation approach (GQ6)**: KenKen and Kakuro filters are implemented now in Beta using anticipatory `if meta.name.value in ("kenken", "kakuro"):` string guards — the candidate service is complete before the Extended Variant enums land in Batch J. **Dependency (GQ-E)**: C3 is blocked on M2 — `_build_peer_cache` must gain the `has_box_regions` kwarg (added in M2) before C3 can wire the correctly-shaped peer cache; all three new filters (KenKen arithmetic cage, Kakuro run-sum/no-repeat, Kakuro early-exit branch) land together with the `has_box_regions` wiring in a single C3 pass; do not split C3 into sub-phases.
+- [x] **C4** Tests (`tests/test_services.py` — extend): `update_all_candidates` skips black cells; Str8ts filter removes invalid straight candidates; Killer filter removes excess-sum candidates; `_can_extend_straight` unit tests against hand-crafted cases.
+
+---
+
+### Batch D — Theme  *(no dependencies)*
+
+- [x] **D1** `ui/theme.py`: add **four** fields to `Palette` dataclass: `black_cell_bg`, `cage_member_bg`, `cage_label_color` (all three with correct LIGHT/DARK colour values), and `cage_dash_pattern: tuple[float, ...]` (e.g. `(4.0, 2.0)`) with matching values in both `LIGHT` and `DARK` instances. The first three fields are already present; only `cage_dash_pattern` is missing. **Prerequisite (GQ-F)**: D1 must land before G6 — `_draw_edges` will access `pal.cage_dash_pattern` for Killer and KenKen intra-cage thin dashed edges; the missing field causes an `AttributeError` at G6 render time.
+
+---
+
+### Batch E — Persistence  *(depends on A)*
+
+- [x] **E1** `persistence/persistence.py`: add `hint_limit: int | None = 3` to `SaveState.__slots__` and `__init__`; serialize/deserialize round-trip; schema stays v2.
+- [x] **E2** Persistence: validate Jigsaw `region_layout` on load — 9×9 shape and exactly 9 cells per region; raise `ValueError` internally on validation failure. **No serialization change (VQ-3, Option A)**: `region_layout` stays at its existing top-level position in `variant_meta` JSON; `VariantMetadata.to_dict()`/`from_dict()` are unchanged. `persistence.load()` catches all variant-validation `ValueError` and re-raises as `PersistenceError("<message>")` — `PersistenceError(ValueError)` is a new subclass defined in `persistence/persistence.py`; `main.py._on_open` catches `PersistenceError` and shows `QMessageBox.critical` **(VQ-C)**.
+- [x] **E3** Persistence: serialize Str8ts `black_cells` as `[[r,c],...]` and `black_givens` as `[[r,c,v],...]` in `constraints` dict; validate no duplicates on load; raise `ValueError` internally; re-raised by `persistence.load()` as `PersistenceError` **(VQ-C)**.
+- [x] **E4** Persistence: serialize Killer `cages` as JSON array in `constraints` dict; validate non-overlapping full 81-cell coverage on load; raise `ValueError` internally; re-raised by `persistence.load()` as `PersistenceError` **(VQ-C)**.
+- [x] **E5** Tests (`tests/test_persistence.py` — extend): `hint_limit=None` and `hint_limit=5` round-trip; v2 save without `"hint_limit"` key deserialises to `hint_limit=3`; Jigsaw/Str8ts/Killer constraint fields round-trip.
+
+---
+
+### Batch F — UI Dialogs  *(depends on A, B, C)*
+
+- [x] **F1** `ui/game_complete_dialog.py` (new file): `GameCompleteDialog(QDialog)` with `Result` enum; labels for SE score/label, elapsed time, moves, hints; three buttons: OK, New Game, Restart.
+- [x] **F2** `ui/new_game_dialog.py` (new file): `NewGameDialog(QDialog, initial_seed: int)` — variant combos, difficulty combo, hint-limit spinner + Unlimited checkbox; `.meta`, `.difficulty`, `.hint_limit` properties.
+- [x] **F3** Worker integration in `NewGameDialog`: `JigsawWorker`, `Str8tsWorker`, `KillerWorker` — each with `cancel_flag`, `_stop` event, retry loops, spinner UI. Define module-level `_MAX_GENERATION_RETRIES = 50` in `new_game_dialog.py` (shared by all workers — Beta and Extended). **On retry exhaustion** (`_MAX_GENERATION_RETRIES` attempts fail without cancel): emit `error("Generation failed — please try again")`; `NewGameDialog` re-enables the Confirm button and displays the message as a status-bar toast — same pattern as Extended Variant workers. Currently the Beta workers have `return` on exhaustion without emitting `error` (GQ1).
+---
+
+### Batch G — Grid Widget  *(depends on A, D)*
+
+- [x] **G1** `ui/grid_widget.py`: extract `_move_selection(dr, dc)` — clamps to `[0, size-1]` (no wrap), skips black cells.
+- [x] **G2** `ui/grid_widget.py`: `_advance_selection(delta, skip_black=True)` — skips black cells row-major.
+- [x] **G3** `ui/grid_widget.py`: `_all_conflict_cells(board, size, region_layout, meta=None)` board-wide scan; gains a `meta` keyword parameter for variant-aware dispatch (R11 Q3, Option A): Standard/Jigsaw/Str8ts/Killer use the existing row/col/region scan; KenKen skips box-unit conflicts (no `has_box_regions`), checks row/col only, then performs a second pass iterating `meta.constraints["cages"]` and adds cage cells whose partial arithmetic is provably violated — all inside `_all_conflict_cells`, one function one call site (R13 Q3, Option A); Kakuro replaces the entire row/col/region scan with intra-run conflict detection only; called unconditionally when `meta is not None`.
+- [x] **G4** `ui/grid_widget.py`: background priority chain `selected > conflict > peer > cage_member > fixed > is_black > base`; black cells skip value/candidate rendering.
+- [x] **G5** `ui/grid_widget.py`: suppress digit input and pencil mode for `is_black=True` cells; skip selection on mouse click; skip on arrow-key navigation.
+- [x] **G6** `ui/grid_widget.py`: add `_draw_edges(painter, size, cell_size, edge_thickness, pal, dash_thin: bool = False) -> None` as a pure rendering function; `_draw_board` pre-builds `edge_thickness: dict[tuple[int,int,str], bool]` (key `(r, c, "H"|"V")` — H = edge above row r, V = edge left of col c — R5 Q4), passes it to `_draw_edges`. The dict is pre-computed by private helper `_build_edge_dict(meta, size, box_rows, box_cols) -> dict[tuple[int,int,str], bool]` called from `_draw_board`, keeping `_draw_board` readable. For Jigsaw: thick where adjacent cells differ in region id. For Killer: same thick pen as box borders where cells differ in cage; thin dashed (using `pal.cage_dash_pattern`) when same cage — cage-sum labels are drawn by the existing `_draw_cage_labels` (see VQ-1 below), not by `_draw_edges`. For Standard/Str8ts: arithmetic `i % box_rows` thick-border logic (existing, now a special case). `dash_thin=True` applies `pal.cage_dash_pattern` for thin intra-cage edges; `_draw_board` passes `dash_thin=(meta.name == Variant.KILLER)`; no variant logic inside `_draw_edges` **(GQ-1, Option A)**. `_draw_cage_labels` is **retained unchanged** — G6 removes `_draw_lines` and adds `_draw_edges`/`_build_edge_dict` only; cage-sum label rendering is already complete **(VQ-1, Option A)**. All cage cells (not just the label cell) shift their candidate mini-grid rect by the cage-label height uniformly; `_draw_candidates` receives an `offset_y` parameter for this **(VQ-2, Option B)**. **Prerequisite**: D1 (`cage_dash_pattern` field in `Palette`) must land before G6.
+- [x] **G7** `ui/grid_widget.py`: Str8ts peer highlight — black cells in selected row/col receive `peer_bg` tint (handled automatically by `_peer_cells`).
+- [x] **G8** `ui/grid_widget.py`: **Unified variant conflict extension** (extends G3 base scan — GQ2): the `meta: VariantMetadata | None = None` parameter and the unconditional `_draw_board` call-site update are **already complete in G3**; add **(a)** Str8ts straight-invalidity detection — flag white cells whose placed value cannot be part of any valid consecutive run in its row or column straight; **(b)** Killer conflict — flag cage cells whose partial values provably exceed the cage target or leave insufficient candidates to reach it. For KenKen, cage-cell arithmetic violation is also performed inside `_all_conflict_cells` after the row/col scan, not as a separate function (R13 Q3, Option A).
+- [x] **G9** Import/export text format (R8 Q10): header block (`variant`, `size`, `seed`, `difficulty`) + digit rows (`0` = empty); Jigsaw `region_layout` as 9 successive `region_layout:` header lines, each with 9 space-separated integer region IDs (e.g. `region_layout: 0 0 0 1 1 1 2 2 2`), one line per board row **(VQ-B)**; Str8ts `mask` (`.`/`B` per row joined by `/`) + `black_givens`; Killer cages use the repeating-field format — one `cage:` header line per cage: `cage: r,c r,c r,c:N` (cell coordinates space-separated as `row,col` pairs, colon before the sum `N`; e.g. `cage: 0,0 0,1 1,0:15`) (VQ4). Validate headers and digit count on import; missing `seed` defaults to 0. The **repeating-field convention** (one `cage:` or `clue:` header line per item, same field name repeated) is established here and applied to KenKen and Kakuro in their respective Extended Variant batches. (R12 Q8, Option A)
+
+---
+
+### Batch H — Controller  *(ATOMIC — depends on A–G; deliver all changes together)*
+
+- [x] **H1** `controller/game_controller.py`: `new_game(meta, difficulty, seed, hint_limit)` — accepts full meta, uses variant registry, handles black cells and Killer cages. **Code gap (GQ-3, Option A)**: `new_game()` currently uses single-branch `reg.get("constraint_ok")` — update to two-branch lookup: `factory_fn = reg.get("constraint_ok_factory"); constraint_ok = factory_fn(meta) if factory_fn else reg.get("constraint_ok")`; implement together with the `constraint_ok_factory` key addition in `REGISTRY[Variant.KILLER]` (see C1 gap).
+- [x] **H2** `controller/game_controller.py`: `hint(mode: str)` with four modes: `auto_fill` (fill+lock 1 cell), `reveal_cell` (fill selected), `eliminate` (remove wrong candidate), `naked_single` (fill all 1-candidate cells); limit enforcement; `cell.is_fixed=True` after fill.
+- [x] **H3** `controller/game_controller.py`: `_on_value_entered` and `_on_pencil_toggled` add `if cell.is_black: return` guards.
+- [x] **H4** `controller/game_controller.py`: `is_complete` skips black cells and checks Killer cage sums. For Codewords: `is_complete` uses the standard grid check only — all cells filled and valid at the digit layer is sufficient; no additional codebook check is needed because standard Sudoku digit validity with a fixed codebook implies bijection consistency. (R11 Q4, Option B)
+- [x] **H5** `controller/game_controller.py`: `set_complete_callback()`, `restart_game()` (resets player edits to clue state, clears undo, resets hints/stats/timer).
+- [x] **H6** `controller/game_controller.py`: `save_game` passes `hint_limit=self._hint_limit` to `SaveState`.
+- [x] **H7** Restart feature (R6 Q9, R7 Q6): add **Restart** to the Game menu with two sub-actions — (a) **Restart** (keep timer) and (b) **Restart and Reset Timer**. Both reset all player-entered values to the initial clue state and clear undo/redo stack. Move and hint counters not reset in Beta. **Implementation (GQ-B)**: the two `QAction` entries (`_act_restart` F9, `_act_restart_timer` Shift+F9) are nested inside a `QMenu` submenu titled `"&Restart"` added to the Game menu — a submenu is acceptable; the spec phrase "two separate QAction entries in the Game menu" is satisfied by two distinct actions regardless of submenu nesting.
+
+---
+
+### Batch I — Main Window  *(ATOMIC with H — depends on H)*
+
+- [x] **I1** `main.py`: `_on_new_game` computes seed, shows `NewGameDialog`, reads `.meta`/`.difficulty`/`.hint_limit`, calls `ctrl.new_game()`.
+- [x] **I2** `main.py`: status bar `QButtonGroup` of 4 radio buttons (Auto/Reveal/Elim./Naked); `_hint_mode` field.
+- [x] **I3** `main.py`: `_on_hint` passes `self._hint_mode` to `ctrl.hint(mode=...)`.
+- [x] **I4** `main.py`: `_on_game_complete` uses `GameCompleteDialog`; dispatches NEW_GAME → `_on_new_game()`, RESTART → `restart_game()`.
+
+---
+
+### Shared Variant — SE Grader Extensions  *(SE engine already complete; extend for variants)*
+
+- [x] **SE-V1** `difficulty_se.py`: `_WorkingGrid` gains `black_cells` slot; candidates zeroed at init; `is_solved()` and `_has_empty_candidates()` skip `black_cells`.
+- [x] **SE-V2** `difficulty_se.py` (`_WorkingGrid.__init__`): add Killer-specific seeding path (R6 Q2): when `meta.name == Variant.KILLER`, after `is_fixed` seeding: (1) `set_value()` for every single-cell cage; (2) run `_killer_cage_step()` once + naked-singles propagation.
+- [x] **SE-V3** `difficulty_se.py` (`_KillerCage`): cap permutation enumeration **only for cages with ≥ 5 cells** at 10 000 permutations — cages of < 5 cells enumerate all permutations without a cap; when cap reached, preserve current narrowed candidates and return without further elimination — never incorrectly eliminates a valid candidate (R6 Q4; GQ4). Code: add `apply_cap = n >= 5` flag inside `_cage_valid_values`; increment `count` and check the cap only when `apply_cap` is `True`. **Status (GQ-A)**: code fix already present (`apply_cap = n >= 5` confirmed in `_cage_valid_values`); marked complete.
+
+---
+
+### Difficulty & Calibration
+
+- [x] **DC1** Difficulty-dependent clue counts: `_DIFFICULTY_GIVENS = {easy: 40, medium: 32, hard: 27, expert: 23}` — same table for all variants; for Str8ts use **density-preserving scaling**: `floor(white_cell_count × _DIFFICULTY_GIVENS[difficulty] / 81)` white cells retain given values — a mask with fewer white cells produces proportionally fewer clues, preserving relative difficulty across mask densities **(VQ-D, Option B)**; Killer applies during initial digit-removal phase; no variant-specific table needed (R7 Q4).
+- [x] **DC2** Difficulty-dependent Killer `is_fixed` assignment: Easy → single-cell cages `is_fixed=True`; Medium → smallest 30 % of cages all cells `is_fixed=True`; Hard/Expert → all cells `is_fixed=False`. **Implementation (GQ-4, Option C)**: `generate_puzzle()` owns this — extend the Killer early-return path (where `constraints.get("cages") is not None`) to apply difficulty-based cell population before returning `(puzzle, solution)`.
+- [x] **DC3** Difficulty-dependent Str8ts black-cell digit exposure: Easy exposes given digits in **all** black cells (`is_fixed=True`); Medium exposes `floor(total_black_cells × DIFFICULTY_GIVENS["medium"] / DIFFICULTY_GIVENS["easy"])` = `floor(total_black_cells × 0.8)` black cells — 80 % exposure (same fraction as the difficulty-scaled clue-count formula; GQ8); Hard/Expert black cells carry no given digits. **Implementation (GQ-5, Option B)**: `generate_puzzle()` owns this — inside the Str8ts pre-processing block, use a seeded-random shuffle of the black-cell list to select the exposure subset, then populate `meta.constraints["black_givens"]` as `[[r, c, v], …]` from the solution; `Str8tsMaskGenerator` returns positions only, solution digits come from `generate_solution`.
+- [x] **DC4** Calibrate SE grader weights against reference puzzle sets; adjust thresholds if Easy/Medium/Hard/Extreme boundaries drift for tested variants.
+
+---
+
+### Tests  *(add incrementally as each Batch completes)*
+
+- [x] **T1** Batch A tests — see A5 above.
+- [x] **T2** Batch B tests — see B8 above.
+- [x] **T3** Batch C tests — see C4 above.
+- [x] **T4** Batch E tests — see E5 above.
+- [x] **T5** Batch F–I tests (`tests/test_ui_shell.py` extend; new `tests/test_wiring.py`): `NewGameDialog` opens, accepts, passes `meta`/`difficulty`/`hint_limit` to controller; `GameCompleteDialog` result codes dispatch correctly; all four hint modes produce expected side-effects (`show_candidate` returns `False` / no-op when no cell is selected; reveals candidates for selected cell when a cell is selected); `_all_conflict_cells` non-empty on a known-conflict board; empty on a valid board.
+- [x] **T6** Property/scenario suites across Standard, Jigsaw, Str8ts, Killer with constraint invariants; import/export round-trip fixtures per variant; UI smoke for new-game dialog, all variants, conflict highlights, cage sum overlay, region boundary rendering, progress dialog cancellation.
+- [x] **T7** Performance benchmarks (`tests/test_performance.py`): `generate_puzzle` standard 9×9 < 2 s; `grade()` < 100 ms; persistence round-trip < 300 ms; Killer cage permutation cap verified for cages > 5 cells.
+
+## Extended Variants (Post-Beta)
+Tasks are grouped by variant. All four variants build on the architecture established in Beta (variant registry, background workers, `_draw_edges`, SE grader). Each batch may start independently once Beta Batches A–I are complete.
+
+---
+
+### Batch J — Extended Enum & Registry  *(depends on Beta Batches A–I being complete)*
+
+- [x] **J1** `model/types.py`: add `Variant.CODEWORDS = "codewords"`, `Variant.KENKEN = "kenken"`, `Variant.KAKURO = "kakuro"` to the `Variant` enum.
+- [x] **J2** `services/variant_registry.py`: register factories for `CODEWORDS`, `KENKEN`, `KAKURO`, and `ONE_TO_25`; each factory returns a partial `VariantMetadata` stub; register cage-arithmetic constraint callbacks for KENKEN and KAKURO.
+- [x] **J3** `ui/new_game_dialog.py`: enable the `ONE_TO_25` option (was `setEnabled(False)` in Beta); add `CODEWORDS`, `KENKEN`, `KAKURO` combo entries (initially `setEnabled(False)`; each is enabled once its worker implementation batch is complete). Add the always-visible size `QComboBox` to the dialog layout (initially disabled and fixed at `"9×9"` for all variants; `"25×25"` fixed for ONE_TO_25; KenKen size options are activated in M3). (R10 Q5, Option B)
+
+---
+
+### Batch K — 1–25 (ONE_TO_25)  *(depends on J)*
+
+- [x] **K1** `solver/variant_generators.py`: add `OneToTwentyFiveGenerator(size=25, seed, difficulty)` — calls `_fill_grid` for a 25×25 standard 5×5-region layout; cancel support via `cancel_flag`.
+- [x] **K2** `ui/new_game_dialog.py`: add `OneToTwentyFiveWorker(QObject)` — performs the **complete generation pipeline** (25×25 solution fill, clue removal, and uniqueness check via `check_unique()`) on the background thread (R11 Q5, Option C; R12 Q2, Option B); same `cancel_flag` + `_stop` pattern; difficulty drives clue count (scaled from `_DIFFICULTY_GIVENS` by `floor(N × 625/81)`); emits `finished(meta)` with a fully-generated puzzle on completion; `GameController.new_game` receives complete meta and does not call `generate_puzzle`. `OneToTwentyFiveWorker` creates `rng = random.Random(seed)` once and threads this single instance through both phases (solution fill and clue-removal loop); per-phase fresh `random.Random(seed)` applies only to workers with a cage-partitioner or template-generator phase (KenKen, Kakuro) — not to 1-25 or Codewords; `CodewordsWorker` likewise uses a single `rng` threaded through all five pipeline steps (R14 Q2, Option A; R15 Q4, Option C)
+- [x] **K3** `ui/grid_widget.py` and `ui/main.py`: auto-scale `cell_size` from viewport for 25×25 (minimum 14 px); 2-digit symbol display; scrollable grid area — `SudokuGridWidget` wrapped in `QScrollArea` in `MainWindow`'s central layout; `SudokuGridWidget` gains updated `sizeHint()` returning `size × cell_size + border margins`; `QScrollArea` provides scroll bars when viewport is too small; no changes to `_draw_board` painting internals beyond `sizeHint()` (R12 Q6, Option A); `_draw_board` uses `box_rows = box_cols = 5` for thick-border arithmetic.
+- [x] **K4** `services/text_format.py` (extend G9's module): add ONE_TO_25 text format support — `"variant: 1to25"` and `"size: 25"` headers; digit rows use **space-separated** values (e.g. `5 14 0 22 ...`; `0` = empty) — multi-digit symbols require space-delimited format (cannot use compact run-together digits); update the import parser to handle space-delimited rows alongside the compact 1–9 format; export emits space-separated digit rows; validate exactly `size²` space-separated tokens per row on import.
+- [x] **K5** Tests: `OneToTwentyFiveGenerator` produces a valid unique 25×25 puzzle; `_count_solutions` terminates within 30 s budget; UI smoke for 25×25 grid render, select, highlight; persistence JSON round-trip; text import/export round-trip with space-separated digit rows.
+
+---
+
+### Batch L — Codewords  *(depends on J)*
+
+- [x] **L1** `solver/variant_generators.py`: add `CodewordsGenerator(size=9, seed, difficulty)` — (1) standard 9×9 backtracking fill; (2) random bijective `{letter: digit}` mapping; (3) clue removal per `_DIFFICULTY_GIVENS`; (4) `given_mappings` selection by difficulty tier (Easy ≥ 5 pairs; Expert ≤ 1); (5) uniqueness verification using `_count_solutions` / `_has_unique_solution` at the digit layer only — codebook is fixed during generation so digit-layer uniqueness fully determines puzzle uniqueness without codebook permutation enumeration. `CodewordsGenerator.generate()` encapsulates all five steps — L1 is the real implementation; `CodewordsWorker` (L2) is the thread/cancel shell that calls `CodewordsGenerator.generate()` as its main action; `CodewordsGenerator` uses a **single** `rng = random.Random(seed)` instance threaded through all five steps (bijection shuffle, fill, clue removal, given-mapping selection) — same pattern as `OneToTwentyFiveWorker`, not the per-phase fresh-seed pattern used by KenKen/Kakuro (R15 Q4, Option C). (R11 Q6, Option A; R13 Q6, Option A)
+- [x] **L2** `ui/new_game_dialog.py`: add `CodewordsWorker(QObject)` — `CodewordsWorker.run()` calls `CodewordsGenerator.generate()` — the worker is the thread/cancel shell; `CodewordsGenerator` (L1) encapsulates all five pipeline steps (R13 Q6, Option A); same `moveToThread` + cancel pattern; emits `finished(meta)` with a fully-generated puzzle; `GameController.new_game` receives complete meta and does not call `generate_puzzle`. (R12 Q4, Option B)
+- [x] **L3** `ui/grid_widget.py`: letter-display mode when `meta.name == Variant.CODEWORDS` — render `inverse_codebook[cell.value]` as display symbol; pencil marks display as letter candidates.
+- [x] **L4** `ui/main.py`: add **Codebook Panel** as a `QDockWidget` (default dock position: bottom of the main window; player can undock and reposition) (R12 Q5, Option C) wrapping a compact 9-slot strip (A–I, each with a digit field); given-mapping slots locked/bold; player-hypothesis slots editable; hidden for non-Codewords variants, shown when `meta.name == Variant.CODEWORDS` on `new_game`/`load`; keyboard-navigable. `show_candidate` hint displays letter candidates (A–I) by mapping digit candidates through the inverse codebook rather than showing raw digit candidates (R10 Q9a, Option B); `walkthrough` highlights the relevant codebook panel slot when `_CodewordsMapping` is the lowest-weight firing technique; `auto_fill` targets grid cells only and never fills a panel entry. (R10 Q9b, Option C)
+- [x] **L5** `services/difficulty_se.py`: add `_CodewordsMapping` technique (weight 1.3) — fires when **every** cell bearing an unassigned letter `L` is a digit-singleton AND they all agree on the same digit `d`; the technique blocks if any cell bearing `L` still carries multiple candidates (all-singleton consensus, not intersection narrowing) (R14 Q7, Option B); inserts before `_HiddenSingleBlock` in `_TECHNIQUES`. `_WorkingGrid.__init__` pre-seeds from `given_mappings`: iterates all board cells and calls `set_value(r, c, digit)` for every cell whose letter matches a `given_mappings` key, locking all instances of that letter to their digit before the technique loop starts. (R13 Q7, Option A)
+- [x] **L6** `persistence/persistence.py`: serialize/deserialize `codebook` and `given_mappings` in `constraints` dict; validate bijection (exactly 9 unique assignments, A–I, digits 1–9) on load. `_CODEWORDS_BIJECTION_CACHE` lives in `solver/solver.py` — built at the start of each solve call from `meta.constraints["codebook"]`; local to the solve invocation, not a module-level structure. (R11 Q7, Option A)
+- [x] **L7** `services/text_format.py` (extend G9's module): add Codewords text format support — headers `"variant: codewords"`, `"codebook: A=1,B=2,..."` (full 9-pair bijection, **required** on import), `"given_mappings: A=3,C=7,..."` (revealed subset, **required** on import); digit rows use letter characters (A–I) with `_` for empty cells; import validates bijection completeness (exactly 9 pairs, no duplicate letters or digits) and that all `given_mappings` entries are a subset of `codebook`; export reconstructs both headers from `meta.constraints["codebook"]` and `meta.constraints["given_mappings"]`. (R12 Q7, Option A)
+- [x] **L8** Tests: `CodewordsGenerator` produces a valid bijection and a unique puzzle; `_CodewordsMapping` technique fires on a hand-crafted minimal fixture; codebook persistence round-trip; UI smoke for letter display and Codebook Panel (QDockWidget visibility toggle); `given_mappings` correctly locked on load; `show_candidate` yields letter candidates not digit candidates; `walkthrough` highlights codebook panel slot when `_CodewordsMapping` is lowest-weight firing technique; text import/export round-trip includes both `codebook:` (full bijection) and `given_mappings:` headers; both validated on import. (R12 Q7, Option A)
+
+---
+
+### Batch M — KenKen  *(depends on J)*
+
+- [x] **M1** `solver/variant_generators.py`: add `KenKenCagePartitioner(size: int, seed: int, rng: random.Random)` — seeded flood-fill cage partitioner for N×N Latin square; difficulty-controlled cage-size distribution (Easy avg 2–3 cells; Medium avg 3–4; Hard/Expert avg 4–5); individual cage size has **no explicit cap** — flood-fill governed purely by distribution target; `_KenKenCage` arithmetic feasibility pruner handles any oversized cage gracefully (R15 Q5, Option C); single-cell cage count target = `floor(DIFFICULTY_GIVENS[difficulty] × N² / 81)` (scaled `_DIFFICULTY_GIVENS` replaces the dropped `_KENKEN_SINGLE_CELL_COUNTS` table, R14 Q8, Option C); enforcement is target-based with retry: flood-fill proceeds freely; if the actual single-cell count is outside the target, return and let `KenKenWorker` retry with `seed + 1` (up to `_MAX_GENERATION_RETRIES` (= 50, module-level constant in `new_game_dialog.py`), R15 Q1, Option B; R15 Q8, Option B); `_stop` guard prevents retrying after cancellation (R14 Q6, Option B); on exhaustion the worker emits `failed(reason: str)` and `NewGameDialog` shows an error toast ("Generation failed — please try again") and re-enables the Confirm button (R15 Q2, Option A); operation assignment (+/−/×/÷); `.partition(solution) -> list[dict]`; accepts optional `cancel_flag`. The `rng` parameter is accepted for interface symmetry but `KenKenCagePartitioner` creates its own `random.Random(seed)` internally for all random choices; the passed `rng` is not used. (R14 Q5, Option B) KenKen uniqueness verification uses `check_unique(meta, board_state, constraint_ok=cage_arithmetic_callback, cancel_flag=cancel_flag)` — same `constraint_ok` mechanism as Killer (R11 Q9, Option A; R12 Q2, Option B). Each `KenKenWorker` phase (Latin square fill, cage partitioning, uniqueness check) seeds independently as `random.Random(seed)` — same seed value, fresh instance per phase; no state threading between phases. (R13 Q2, Option B)
+- [x] **M2** `solver/generator.py` and `services/difficulty_se.py`: extend `_build_peer_cache(size, region_layout, has_box_regions: bool = True)` and `_build_unit_groups(size, region_layout, has_box_regions: bool = True)` with an explicit `has_box_regions` keyword parameter; update all call sites in `solver.py` and `difficulty_se.py` to pass `meta.constraints.get("has_box_regions", True)`; allows Latin-square generation and SE grading for KenKen without box-uniqueness. (R10 Q2, Option A)
+- [x] **M3** `ui/new_game_dialog.py`: add `KenKenWorker(QObject)` — performs the **entire generation pipeline** (Latin square fill + cage partitioning + operation assignment + clue removal + uniqueness check) on the background thread (R11 Q8, Option A); same `moveToThread` + cancel pattern; retry loop: if `KenKenCagePartitioner` returns a single-cell count outside the scaled `_DIFFICULTY_GIVENS` target, worker retries with `seed + 1` up to `_MAX_GENERATION_RETRIES` (= 50, module-level constant in `new_game_dialog.py`) (R15 Q1, Option B; R15 Q8, Option B); `_stop` guard checked before each retry (R14 Q6, Option B); on exhaustion emits `failed(reason: str)`; `NewGameDialog` catches it, shows error toast, re-enables Confirm button (R15 Q2, Option A); emits `finished(meta)` with a fully-generated puzzle on success; `GameController.new_game` receives complete meta and does not call `generate_puzzle`. Each phase seeds independently as `random.Random(seed)` — same seed value, fresh instance per phase; no state threading. (R13 Q2, Option B) Also activate the always-visible size `QComboBox` for KenKen: enable with `"4×4"`, `"6×6"`, `"9×9"` options; all other variants remain disabled at their fixed sizes; update `KenKenWorker` to read the selected size from the dialog. (R10 Q5, Option B)
+- [x] **M4** `ui/grid_widget.py`: KenKen cage-label style (`"12+"`, `"6×"`, `"2÷"`, `"3−"`) in topmost-leftmost cell; reuses `_draw_edges` for cage boundaries; pencil-mark shift for cage-label height (same as Killer).
+- [x] **M5** `services/difficulty_se.py`: add `_KenKenCage` technique (weight 1.9) — per-cage candidate restriction by operation (sum/product feasibility for +/×; two-cell difference/quotient elimination for −/÷); permutation cap 10 000; fires only when `meta.name == Variant.KENKEN`. SE score label thresholds unchanged (single shared table for all variants; per-variant calibration deferred pending EV-T6 labelled corpus; add `# TODO: calibrate per-variant thresholds after EV-T6 corpus` at the threshold definition). (R10 Q8, Option C)
+- [x] **M6** `controller/game_controller.py`: extend `is_complete` to inline-check all cage arithmetic targets when `meta.name == Variant.KENKEN`.
+- [x] **M7** `persistence/persistence.py`: serialize/deserialize `cages` list with `"op"` field; validate non-overlapping full N×N coverage on load.
+- [x] **M8** `services/text_format.py` (extend G9's module): add KenKen text format support — headers `"variant: kenken"` and `"size: N"`; each cage uses the repeating-field convention: one `cage:` header line per cage in the format `cage: r1c1,r2c2,...:op:target` (cell coordinates as `row,col` pairs; op is `+`, `-`, `*`, `/`, or empty for single-cell givens; target is an integer) (R12 Q8, Option A); digit rows standard (`0` = empty); import validates that cage cells collectively cover all `N×N` positions exactly once.
+- [x] **M9** Tests: `KenKenCagePartitioner` produces full N×N coverage with valid operations and integer targets; uniqueness verified; `_KenKenCage` fires on minimal fixture per operation; `is_complete` rejects board with wrong arithmetic; round-trip persistence including `"op"` field; text import/export round-trip including `cage:` header lines with operator and target.
+
+---
+
+### Batch N — Kakuro  *(depends on J)*
+
+- [x] **N1** `solver/variant_generators.py`: add `KakuroTemplateLibrary` — **runtime procedural generator**: the `seed` seeds the constraint-based grid builder directly, deterministically producing one layout per seed (no `pool_size` modulo selection — dropped, R14 Q3, Option C); difficulty selects generation parameters (density targets, run-length target ranges); shapes whose white-cell proportion falls outside the difficulty-tier density band (Easy 50–65 %, Medium 40–55 %, Hard 30–45 %, Expert 25–40 %) are rejected and the builder retries with `seed + 1` up to `_MAX_GENERATION_RETRIES` (= 50, module-level constant in `new_game_dialog.py`) (R14 Q4, Option C; R15 Q6, Option A; R15 Q8, Option B); on exhaustion the worker emits `failed(reason: str)` and `NewGameDialog` shows an error toast exactly as for `KenKenWorker` (R15 Q2, Option A); all generated shapes additionally require every run ≥ 2 cells and the full white-cell component to form a single connected region (isolated white islands rejected); no pre-committed JSON files, no `importlib.resources`, no `pyproject.toml` package-data declarations required — and `KakuroFillGenerator(template, seed: int, rng: random.Random)` — `KakuroWorker` creates `rng = random.Random(seed + N)` using the retry-adjusted seed before constructing the fill generator so template and fill are seeded consistently; `KakuroFillGenerator` uses the **passed `rng`** directly for any random tie-breaking during backtracking (R15 Q7, Option A); passes tightest-run-first `cell_order` to `_fill_grid` (R10 Q1, Option C); sum + no-repeat-per-run pruning; uniqueness verified via `check_unique(meta, filled_board, constraint_ok=validate_kakuro, cancel_flag=cancel_flag)` (R13 Q1, Option A; R12 Q2, Option B; R10 Q4, Option C); `validate_kakuro` is co-located in `solver/variant_generators.py`, imported by `generator.py` when building the `constraint_ok` callback (R13 Q5, Option A); `validate_kakuro` signature: `(meta: VariantMetadata, grid: Grid, row: int, col: int, val: int) -> bool` (R11 Q12, Option A); `.fill() -> list[list[int]]`; accepts optional `cancel_flag`. Also extend `_fill_grid` with `cell_order: list[tuple[int,int]] | None = None` parameter.
+- [x] **N2** `ui/new_game_dialog.py`: add `KakuroWorker(QObject)` — template selection + fill; same `moveToThread` + cancel pattern; creates `rng = random.Random(seed + N)` using the retry-adjusted seed before constructing `KakuroFillGenerator` so template and fill are seeded consistently (R15 Q7, Option A); emits `failed(reason: str)` on retry exhaustion; `NewGameDialog` catches it, shows error toast, re-enables Confirm button (R15 Q2, Option A); populates `meta.constraints["clues"]`, `["black_cells"]`, `["clue_positions"]`; emits `finished(meta)` on success.
+- [x] **N3** `ui/grid_widget.py`: clue-bearing black cells render with diagonal split (down clue top-left, across clue bottom-right, diagonal line in `cage_label_color`); special `_draw_board` rendering branch keyed on `clue_positions` lookup.
+- [x] **N4** `ui/grid_widget.py`: run-peer highlight — selecting a white Kakuro cell highlights all across-run and down-run cells with `peer_bg` tint; derive runs from `meta.constraints["clues"]`.
+- [x] **N5** `services/difficulty_se.py`: add `_KakuroRun` technique (weight 2.1) — for each run, restrict per-cell candidates using run-sum feasibility + already-placed digits in the run; fires only when `meta.name == Variant.KAKURO`. Also extend `_WorkingGrid.__init__`: after detecting `KAKURO` and building run-based units, run one full pass of run-sum + no-repeat restriction via a shared private function `_apply_kakuro_run_restriction(grid: _WorkingGrid) -> bool`; return value: `True` = at least one candidate narrowed (progress), `False` = no candidate changed — matches standard technique `_apply` convention so the technique loop can restart on progress (R14 Q1, Option A); `_KakuroRun._apply` delegates to this same helper; `_WorkingGrid.__init__` calls it directly without constructing a full technique object, pre-narrowing candidates before the main technique loop (analogous to `SE-V2` for Killer). (R12 Q3, Option B; R13 Q8, Option A)
+- [x] **N6** `controller/game_controller.py`: extend `is_complete` to inline-check all run sums and intra-run uniqueness when `meta.name == Variant.KAKURO`; `_on_value_entered` and `_on_pencil_toggled` already guard `is_black` (covers Kakuro black cells).
+- [x] **N7** `persistence/persistence.py`: serialize/deserialize `clues` and `black_cells` in `constraints` dict; `clue_positions` is **not** persisted — rebuild it from `clues` on load (R11 Q11, Option C); validate run coverage (all white cells in exactly one across-run and one down-run) on load. No `pyproject.toml` package-data declaration needed — `KakuroTemplateLibrary` is a runtime procedural generator with no on-disk template files. (R13 Q4, Option C)
+- [x] **N8** `services/text_format.py` (extend G9's module): add Kakuro text format support — headers `"variant: kakuro"` and `"size: N"`; `"black_cells"` encoded as compact row strings (`.`/`B` per cell per row joined by `/`, same convention as Str8ts mask); each run uses the repeating-field convention: one `clue:` header line per run in the format `clue: r1c1,r1c2,...:sum:dir` (cell coordinates as `row,col` pairs, colon-delimited sum and direction `"across"`|`"down"`) (R12 Q8, Option A); digit rows use `0` for empty white cells and `_` for black cells; import validates run coverage (every white cell referenced in exactly one across-run and one down-run).
+- [x] **N9** Tests: `KakuroFillGenerator` produces a valid unique puzzle with all run sums satisfied; `_KakuroRun` fires on minimal fixture; `is_complete` rejects board with un-satisfied run sums; round-trip persistence; UI smoke for diagonal clue labels and run-peer highlights; text import/export round-trip including `clue:` header lines and `_`-encoded black cells.
+
+---
+
+### Extended Variants Tests  *(add as each Batch completes)*
+
+- [x] **EV-T1** Batch J tests: new enum values round-trip in JSON; `REGISTRY` entries exist for all 7 variants; `NewGameDialog` enables/disables correct variant options.
+- [x] **EV-T2** Batch K tests — see K5 above (text format implementation K4; tests K5).
+- [x] **EV-T3** Batch L tests — see L8 above (text format implementation L7; tests L8).
+- [x] **EV-T4** Batch M tests — see M9 above (text format implementation M8; tests M9).
+- [x] **EV-T5** Batch N tests — see N9 above (text format implementation N8; tests N9).
+- [x] **EV-T6** Property/scenario suites for all four extended variants; import/export round-trip fixtures per variant; UI smoke for new-game dialog with all variants enabled; conflict highlights per variant; SE technique firing per variant; performance guards (25×25 generation < 30 s; `grade()` < 2 s for ONE_TO_25; KenKen N=9 generation < 30 s; Kakuro generation < 30 s; `grade()` < 1 s for KenKen and Kakuro).
+
+---
 
 ## Performance & Hardening
 - Benchmarks for solver/validator (<200ms validate, <2s solve 9x9) and persistence (<300ms typical); profile hot paths.
+- SE grader benchmark: `grade()` < 100ms for typical 9x9; cage permutation safe for cages > 5 cells.
 - Memory guards for undo/redo and candidate tracking (esp. 1–25).
 - Robust error handling for malformed imports; deterministic seeds in tests.
 - Documentation: architecture, data formats, extension points, usage.
@@ -31,8 +276,10 @@
 - Theming extensibility for future palette/fonts; English-only baseline with i18n hooks.
 - Additional solver optimizations for larger grids.
 
-## Fleeting
-- Define difficulty classification criteria per level (givens, heuristic thresholds) and wire into generators.
-- Source/define variant assets: Jigsaw region masks, Str8ts rule specifics/layouts, 1–25 symbols/regions.
-- Finalize text import/export schema: exact headers/fields, delimiters, and validation rules.
-- Specify hint limit configuration location (per-game setting vs. global default) and UI control.
+## Fleeting Notes
+- Define difficulty classification criteria per level (givens, heuristic thresholds) and wire into generators. *(now addressed in DC1–DC3; move to done once wired)*
+- Source/define variant assets: Jigsaw region masks, Str8ts rule specifics/layouts, Killer cage partitioner, 1–25 symbols/regions. *(1–25 deferred to post-Beta)*
+- Finalize text import/export schema: exact headers/fields, delimiters, and validation rules. *(captured in G9; move to done once G9 is complete)*
+- Specify hint limit configuration location (per-game setting vs. global default) and UI control. *(resolved: per-game in NewGameDialog, see F2; move to done once F2 is implemented)*
+- Consider whether to expose `_DIFFICULTY_GIVENS` as a user-configurable table in a future settings dialog (currently hardcoded per DC1).
+- **M4 reminder — `offset_y` parity**: KenKen cage-label cells must apply the `offset_y` offset to `_draw_candidates` for *all* cage cells (not just the label cell), consistent with the Killer VQ-2 decision already wired in G6. Confirm M4 explicitly handles this — currently the task says only "same as Killer" without naming the parameter.

@@ -99,6 +99,66 @@ class TestVariantMetadata:
         assert VariantMetadata.from_dict(meta.to_dict()) == meta
 
 
+class TestVariantMetadataA5:
+    """A5: new variant/field tests."""
+
+    def test_variant_one_to_25_value(self) -> None:
+        assert Variant.ONE_TO_25.value == "1to25"
+
+    def test_variant_killer_value(self) -> None:
+        assert Variant.KILLER.value == "killer"
+
+    def test_variant_one_to_25_round_trips_in_dict(self) -> None:
+        meta = VariantMetadata.standard_9x9()
+        d = meta.to_dict()
+        d["name"] = "1to25"
+        meta2 = VariantMetadata.from_dict(d)
+        assert meta2.name == Variant.ONE_TO_25
+
+    def test_from_dict_extended_migrates_to_one_to_25(self) -> None:
+        meta = VariantMetadata.standard_9x9()
+        d = meta.to_dict()
+        d["name"] = "extended"
+        meta2 = VariantMetadata.from_dict(d)
+        assert meta2.name == Variant.ONE_TO_25
+
+    def test_board_from_dict_extended_migrates_to_one_to_25(self) -> None:
+        b = Board(size=9, variant=Variant.STANDARD)
+        d = b.to_dict()
+        d["variant"] = "extended"
+        b2 = Board.from_dict(d)
+        assert b2.variant == Variant.ONE_TO_25
+
+    def test_cell_is_black_default_false(self) -> None:
+        c = Cell()
+        assert c.is_black is False
+
+    def test_cell_is_black_serialises(self) -> None:
+        c = Cell(is_black=True)
+        d = c.to_dict()
+        assert d["is_black"] is True
+
+    def test_cell_is_black_round_trips(self) -> None:
+        c = Cell(is_black=True)
+        c2 = Cell.from_dict(c.to_dict())
+        assert c2.is_black is True
+
+    def test_cell_is_black_false_by_default_on_deserialize(self) -> None:
+        d = Cell().to_dict()
+        d.pop("is_black", None)
+        c = Cell.from_dict(d)
+        assert c.is_black is False
+
+    def test_variant_metadata_accepts_empty_region_layout(self) -> None:
+        meta = VariantMetadata(
+            name=Variant.JIGSAW,
+            size=9,
+            symbols=list(range(1, 10)),
+            region_layout=[],
+        )
+        assert meta.region_layout == []
+
+
 class TestBoard:
     def test_default_board_all_empty(self) -> None:
         b = Board(size=9, variant=Variant.STANDARD)

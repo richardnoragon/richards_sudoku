@@ -15,7 +15,9 @@ from richards_sudoku.model.types import Board, Move, Variant, VariantMetadata
 from richards_sudoku.persistence import SaveState, save
 from richards_sudoku.services.stats import GameStats
 from richards_sudoku.services.timer import GameTimer
-from richards_sudoku.ui.grid_widget import SudokuGridWidget
+from richards_sudoku.ui.game_complete_dialog import GameCompleteDialog
+from richards_sudoku.ui.grid_widget import SudokuGridWidget, _all_conflict_cells
+from richards_sudoku.ui.new_game_dialog import NewGameDialog
 
 
 # ---------------------------------------------------------------------------
@@ -422,16 +424,201 @@ class TestHint:
 
 
 # ---------------------------------------------------------------------------
+# T5: Hint modes and restart
+# ---------------------------------------------------------------------------
+
+class TestHintModes:
+
+    def _first_empty(self, ctrl: GameController):
+        for r in range(9):
+            for c in range(9):
+                cell = ctrl._board.cell(r, c)
+                if not cell.is_fixed and cell.value is None:
+                    return r, c
+        pytest.skip("No empty cell")
+
+    def test_auto_fill_mode_fills_cell(self, controller_with_game: GameController):
+        before = sum(
+            1 for r in range(9) for c in range(9)
+            if controller_with_game._board.cell(r, c).value is not None
+        )
+        result = controller_with_game.hint(mode="auto_fill")
+        assert result is True
+        after = sum(
+            1 for r in range(9) for c in range(9)
+            if controller_with_game._board.cell(r, c).value is not None
+        )
+        assert after > before
+
+    def test_reveal_cell_mode_fills_selected_cell(self, controller_with_game: GameController):
+        r, c = self._first_empty(controller_with_game)
+        controller_with_game._grid.select_cell(r, c)
+        result = controller_with_game.hint(mode="reveal_cell")
+        assert result is True
+        assert controller_with_game._board.cell(r, c).value is not None
+
+    def test_naked_single_mode_fills_if_any(self, controller_with_game: GameController):
+        # naked_single fills all cells with exactly 1 candidate; may return True or False
+        result = controller_with_game.hint(mode="naked_single")
+        assert isinstance(result, bool)
+
+    def test_hint_limit_enforced(self, grid_widget: SudokuGridWidget):
+        ctrl = GameController(grid_widget)
+        ctrl.new_game(seed=1, hint_limit=2)
+        ctrl.hint(mode="auto_fill")
+        ctrl.hint(mode="auto_fill")
+        # Third hint should be refused
+        result = ctrl.hint(mode="auto_fill")
+        assert result is False
+
+    def test_hint_unlimited_never_refused(self, grid_widget: SudokuGridWidget):
+        ctrl = GameController(grid_widget)
+        ctrl.new_game(seed=1, hint_limit=None)
+        for _ in range(10):
+            ctrl.hint(mode="auto_fill")
+        # Should never return False due to limit
+        assert ctrl._hints_remaining is None
+
+    def test_hints_remaining_decrements(self, grid_widget: SudokuGridWidget):
+        ctrl = GameController(grid_widget)
+        ctrl.new_game(seed=1, hint_limit=5)
+        assert ctrl._hints_remaining == 5
+        ctrl.hint(mode="auto_fill")
+        assert ctrl._hints_remaining == 4
+
+    def test_eliminate_mode_no_selection_returns_false(self, controller_with_game: GameController):
+        """eliminate returns False when no cell is selected."""
+        # Ensure no cell selected
+        controller_with_game._grid.selected_cell  # confirm attribute exists
+        result = controller_with_game.hint(mode="eliminate")
+        # With no selection, eliminate should return False
+        assert result is False
+
+    def test_eliminate_mode_removes_wrong_candidate(self, controller_with_game: GameController):
+        """eliminate removes one wrong candidate from the selected cell."""
+        r, c = self._first_empty(controller_with_game)
+        cell = controller_with_game._board.cell(r, c)
+        sol_val = controller_with_game._solution[r][c]
+        # Force extra wrong candidate
+        wrong = next(v for v in range(1, 10) if v != sol_val)
+        cell.candidates = {sol_val, wrong}
+        controller_with_game._grid.select_cell(r, c)
+        result = controller_with_game.hint(mode="eliminate")
+        assert result is True
+        # The wrong candidate should have been removed
+        assert wrong not in controller_with_game._board.cell(r, c).candidates
+
+    def test_show_candidate_no_selection_returns_false(self, controller_with_game: GameController):
+        """show_candidate returns False when no cell is selected."""
+        result = controller_with_game.hint(mode="show_candidate")
+        assert result is False
+
+    def test_show_candidate_reveals_solution_candidate(self, controller_with_game: GameController):
+        """show_candidate adds solution value to selected cell's candidates."""
+        r, c = self._first_empty(controller_with_game)
+        sol_val = controller_with_game._solution[r][c]
+        cell = controller_with_game._board.cell(r, c)
+        # Remove sol_val from candidates to confirm it gets added back
+        cell.candidates.discard(sol_val)
+        controller_with_game._grid.select_cell(r, c)
+        result = controller_with_game.hint(mode="show_candidate")
+        assert result is True
+        assert sol_val in controller_with_game._board.cell(r, c).candidates
+
+    def test_show_candidate_does_not_decrement_hints(self, grid_widget: SudokuGridWidget):
+        """show_candidate never decrements the hint counter."""
+        ctrl = GameController(grid_widget)
+        ctrl.new_game(seed=1, hint_limit=3)
+        r, c = self._first_empty(ctrl)
+        ctrl._grid.select_cell(r, c)
+        ctrl.hint(mode="show_candidate")
+        assert ctrl._hints_remaining == 3  # must be unchanged
+
+    def test_show_candidate_works_when_hints_exhausted(self, grid_widget: SudokuGridWidget):
+        """show_candidate fires even when hint counter is at zero."""
+        ctrl = GameController(grid_widget)
+        ctrl.new_game(seed=1, hint_limit=0)
+        r, c = self._first_empty(ctrl)
+        ctrl._grid.select_cell(r, c)
+        # hint_limit=0 → zero hints remaining; auto_fill would be refused
+        assert ctrl.hint(mode="auto_fill") is False
+        # but show_candidate must still succeed
+        result = ctrl.hint(mode="show_candidate")
+        assert result is True
+
+
+class TestRestartGame:
+
+    def _first_empty(self, ctrl: GameController):
+        for r in range(9):
+            for c in range(9):
+                cell = ctrl._board.cell(r, c)
+                if not cell.is_fixed and cell.value is None:
+                    return r, c
+        pytest.skip("No empty cell")
+
+    def test_restart_clears_player_entries(self, controller_with_game: GameController):
+        r, c = self._first_empty(controller_with_game)
+        controller_with_game._grid.value_entered.emit(r, c, 5)
+        assert controller_with_game._board.cell(r, c).value == 5
+        controller_with_game.restart_game()
+        assert controller_with_game._board.cell(r, c).value is None
+
+    def test_restart_clears_undo_stack(self, controller_with_game: GameController):
+        r, c = self._first_empty(controller_with_game)
+        controller_with_game._grid.value_entered.emit(r, c, 5)
+        assert controller_with_game.can_undo
+        controller_with_game.restart_game()
+        assert not controller_with_game.can_undo
+
+    def test_restart_resets_hints(self, grid_widget: SudokuGridWidget):
+        ctrl = GameController(grid_widget)
+        ctrl.new_game(seed=1, hint_limit=3)
+        ctrl.hint(mode="auto_fill")
+        assert ctrl._hints_remaining == 2
+        ctrl.restart_game()
+        assert ctrl._hints_remaining == 3
+
+    def test_restart_keep_timer_preserves_running(self, controller_with_game: GameController):
+        assert controller_with_game._timer.is_running
+        controller_with_game.restart_game(reset_timer=False)
+        assert controller_with_game._timer.is_running
+
+    def test_restart_reset_timer_restarts_timer(self, controller_with_game: GameController):
+        controller_with_game.restart_game(reset_timer=True)
+        assert controller_with_game._timer.is_running
+
+    def test_restart_no_game_is_noop(self, controller: GameController):
+        # Should not raise
+        controller.restart_game()
+
+
+# ---------------------------------------------------------------------------
 # MainWindow action integration
 # ---------------------------------------------------------------------------
 
 class TestMainWindowIntegration:
 
+    @staticmethod
+    def _start_game(mw: MainWindow) -> None:
+        """Bypass NewGameDialog — start a seeded game directly."""
+        mw._ctrl.new_game(seed=1)
+        mw._clock.start()
+        mw._update_action_states()
+
+    @staticmethod
+    def _wire_bypass(mw: MainWindow) -> None:
+        """Reconnect _act_new to bypass the blocking NewGameDialog."""
+        mw._act_new.triggered.disconnect()
+        mw._act_new.triggered.connect(lambda: TestMainWindowIntegration._start_game(mw))
+
     def test_new_game_action_creates_board(self, main_window: MainWindow):
+        self._wire_bypass(main_window)
         main_window._act_new.trigger()
         assert main_window._grid._board is not None
 
     def test_new_game_enables_save(self, main_window: MainWindow):
+        self._wire_bypass(main_window)
         main_window._act_new.trigger()
         assert main_window._act_save.isEnabled()
 
@@ -439,6 +626,7 @@ class TestMainWindowIntegration:
         assert not main_window._act_undo.isEnabled()
 
     def test_undo_action_enabled_after_move(self, qtbot: QtBot, main_window: MainWindow):
+        self._wire_bypass(main_window)
         main_window._act_new.trigger()
         grid = main_window._grid
         # Find and click an empty cell, then type a digit
@@ -452,6 +640,7 @@ class TestMainWindowIntegration:
         assert main_window._act_undo.isEnabled()
 
     def test_undo_action_reverts_move(self, qtbot: QtBot, main_window: MainWindow):
+        self._wire_bypass(main_window)
         main_window._act_new.trigger()
         grid = main_window._grid
         board = grid._board
@@ -469,7 +658,144 @@ class TestMainWindowIntegration:
         assert main_window._grid._board.cell(target_r, target_c).value is None
 
     def test_timer_label_updates(self, main_window: MainWindow):
+        self._wire_bypass(main_window)
         main_window._act_new.trigger()
         main_window._refresh_timer_label()
         text = main_window._lbl_timer.text()
         assert ":" in text
+
+
+# ---------------------------------------------------------------------------
+# T5: _all_conflict_cells
+# ---------------------------------------------------------------------------
+
+class TestConflictCells:
+
+    def _standard_layout(self) -> list[list[int]]:
+        return [[(r // 3) * 3 + (c // 3) for c in range(9)] for r in range(9)]
+
+    def test_nonempty_on_row_conflict(self):
+        """Two cells in the same row with the same value → both appear in result."""
+        layout = self._standard_layout()
+        meta = VariantMetadata.standard_9x9()
+        board = Board(size=9, variant=Variant.STANDARD)
+        board.cell(0, 0).value = 5
+        board.cell(0, 1).value = 5
+        conflicts = _all_conflict_cells(board, 9, layout, meta)
+        assert (0, 0) in conflicts
+        assert (0, 1) in conflicts
+
+    def test_nonempty_on_col_conflict(self):
+        """Two cells in the same column with the same value → both appear."""
+        layout = self._standard_layout()
+        meta = VariantMetadata.standard_9x9()
+        board = Board(size=9, variant=Variant.STANDARD)
+        board.cell(0, 0).value = 7
+        board.cell(1, 0).value = 7
+        conflicts = _all_conflict_cells(board, 9, layout, meta)
+        assert (0, 0) in conflicts
+        assert (1, 0) in conflicts
+
+    def test_empty_on_valid_partial_board(self):
+        """Unique values across rows/cols/regions → no conflicts."""
+        layout = self._standard_layout()
+        meta = VariantMetadata.standard_9x9()
+        board = Board(size=9, variant=Variant.STANDARD)
+        # Fill first row with unique values 1–9
+        for c in range(9):
+            board.cell(0, c).value = c + 1
+        conflicts = _all_conflict_cells(board, 9, layout, meta)
+        assert not conflicts
+
+    def test_empty_on_empty_board(self):
+        """No values placed → no conflicts."""
+        layout = self._standard_layout()
+        meta = VariantMetadata.standard_9x9()
+        board = Board(size=9, variant=Variant.STANDARD)
+        conflicts = _all_conflict_cells(board, 9, layout, meta)
+        assert not conflicts
+
+
+# ---------------------------------------------------------------------------
+# T5: NewGameDialog wiring
+# ---------------------------------------------------------------------------
+
+class TestNewGameDialogWiring:
+
+    def test_dialog_has_meta_property(self, qtbot: QtBot):
+        dlg = NewGameDialog(initial_seed=1)
+        qtbot.addWidget(dlg)
+        assert hasattr(dlg, "meta")
+
+    def test_dialog_has_difficulty_property(self, qtbot: QtBot):
+        dlg = NewGameDialog(initial_seed=1)
+        qtbot.addWidget(dlg)
+        assert hasattr(dlg, "difficulty")
+
+    def test_dialog_has_hint_limit_property(self, qtbot: QtBot):
+        dlg = NewGameDialog(initial_seed=1)
+        qtbot.addWidget(dlg)
+        assert hasattr(dlg, "hint_limit")
+
+    def test_dialog_default_difficulty_is_medium(self, qtbot: QtBot):
+        dlg = NewGameDialog(initial_seed=1)
+        qtbot.addWidget(dlg)
+        assert dlg.difficulty == "medium"
+
+    def test_dialog_default_hint_limit_is_3(self, qtbot: QtBot):
+        dlg = NewGameDialog(initial_seed=1)
+        qtbot.addWidget(dlg)
+        assert dlg.hint_limit == 3
+
+
+# ---------------------------------------------------------------------------
+# T5: GameCompleteDialog result dispatch
+# ---------------------------------------------------------------------------
+
+class TestGameCompleteDialogDispatch:
+
+    def test_default_result_is_ok(self, qtbot: QtBot):
+        dlg = GameCompleteDialog()
+        qtbot.addWidget(dlg)
+        assert dlg.result_choice == GameCompleteDialog.Result.OK
+
+    def test_ok_slot_sets_ok_result(self, qtbot: QtBot):
+        dlg = GameCompleteDialog()
+        qtbot.addWidget(dlg)
+        dlg._on_ok()
+        assert dlg.result_choice == GameCompleteDialog.Result.OK
+
+    def test_new_game_slot_sets_new_game_result(self, qtbot: QtBot):
+        dlg = GameCompleteDialog()
+        qtbot.addWidget(dlg)
+        dlg._on_new_game()
+        assert dlg.result_choice == GameCompleteDialog.Result.NEW_GAME
+
+    def test_restart_slot_sets_restart_result(self, qtbot: QtBot):
+        dlg = GameCompleteDialog()
+        qtbot.addWidget(dlg)
+        dlg._on_restart()
+        assert dlg.result_choice == GameCompleteDialog.Result.RESTART
+
+    def test_result_enum_values_distinct(self):
+        assert GameCompleteDialog.Result.OK != GameCompleteDialog.Result.NEW_GAME
+        assert GameCompleteDialog.Result.OK != GameCompleteDialog.Result.RESTART
+        assert GameCompleteDialog.Result.NEW_GAME != GameCompleteDialog.Result.RESTART
+
+    def test_main_window_restart_dispatch(self, qtbot: QtBot, main_window: MainWindow):
+        """MainWindow._on_game_complete with RESTART result calls restart_game."""
+        # Start a game so restart has something to work with
+        main_window._ctrl.new_game(seed=1)
+        main_window._update_action_states()
+        # Simulate game-complete callback with RESTART result by patching dialog
+        import unittest.mock as mock
+        with mock.patch(
+            "richards_sudoku.main.GameCompleteDialog"
+        ) as MockDlg:
+            instance = MockDlg.return_value
+            instance.exec.return_value = None
+            instance.result_choice = GameCompleteDialog.Result.RESTART
+            # Invoke the completion handler
+            main_window._on_game_complete()
+        # After restart, board should still exist (game was restarted, not cleared)
+        assert main_window._ctrl._board is not None

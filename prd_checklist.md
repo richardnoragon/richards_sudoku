@@ -5,9 +5,11 @@
 ### User Story 1.1  
 As a user, I want to **create a new Sudoku puzzle** so that I can start playing immediately.  
 - **Acceptance Criteria:**  
-  - User can select puzzle type (Standard, Jigsaw, Str8ts, 1–25).  
+  - User can select puzzle type: Standard, Jigsaw, Str8ts, Killer (Beta); 1–25, Codewords, KenKen, Kakuro (Extended Variants phase).  
+  - Greyed-out variants are visible in the selector but disabled until their implementation batch ships.  
   - Puzzle is generated with valid solvable configuration.  
   - Difficulty level can be chosen (Easy, Medium, Hard, Expert).  
+  - SE difficulty score and category label are displayed in the status bar after generation.  
 
 ### User Story 1.2  
 As a user, I want to **save my current game** so I can resume later.  
@@ -22,6 +24,7 @@ As a user, I want to **load a saved game** so I can continue where I left off.
   - Load restores puzzle state exactly as saved.  
   - Timer resumes from saved time.  
   - Pencil marks and hints are preserved.  
+  - SE difficulty score and category are restored from save file (no recomputation on load).
 
 ### User Story 1.4  
 As a user, I want to **import/export puzzles** so I can share them with others.  
@@ -102,7 +105,7 @@ As a user, I want **customizable themes** so I can adjust for comfort.
 ### User Story 5.1  
 As a developer, I want a **modular architecture** so I can extend easily.  
 - **Acceptance Criteria:**  
-  - Separate modules for generation, solving, UI, persistence, statistics.  
+  - Separate modules for generation, solving, UI, persistence, statistics, and SE difficulty grading.  
   - Clear documentation for each module.  
 
 ### User Story 5.2  
@@ -110,6 +113,14 @@ As a developer, I want **efficient solving algorithms** so large puzzles are pla
 - **Acceptance Criteria:**  
   - Solver handles grids within reasonable time.  
   - Uses backtracking + constraint propagation.  
+
+### User Story 5.3  
+As a developer, I want a **SE difficulty grader** so puzzles are rated objectively.  
+- **Acceptance Criteria:**  
+  - `grade(board, meta)` returns a numeric score (0–8.0) and a category label.  
+  - Grader operates on fixed clues only; ignores player-entered values.  
+  - Score persisted in save schema; restored on load without recomputing.  
+  - Grader completes in < 100ms for a typical 9×9 puzzle.
 
 ---
 

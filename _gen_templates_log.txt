@@ -1,0 +1,66 @@
+
+============================================================
+Generating 3 templates for hard (target=305)
+============================================================
+[hard] seed=99: 20s  checks=331  slow=0  skipped=0  givens=305
+  -> Template 1 stored (givens=305)
+  [hard] seed=0  check 328: 2.1s (removed)  givens=309  total=16s
+  [hard] seed=0  check 329: 2.8s (removed)  givens=308  total=19s
+  [hard] seed=0  check 330: 13.0s (removed)  givens=307  total=32s
+  [hard] seed=0  check 331: 14.7s (removed)  givens=306  total=47s
+  [hard] seed=0  check 332: TIMEOUT(>30s)  givens=306  total=77s
+  [hard] seed=0  check 333: TIMEOUT(>30s)  givens=306  total=107s
+  [hard] seed=0  check 334: 14.7s (removed)  givens=305  total=122s
+[hard] seed=0: 122s  checks=334  slow=5  skipped=2  givens=305
+  -> Template 2 stored (givens=305)
+[hard] seed=1: 10s  checks=325  slow=0  skipped=0  givens=305
+  -> Template 3 stored (givens=305)
+
+Got 3 hard templates:
+  seed=99  givens=305  time=20.1s
+  seed=0  givens=305  time=122.0s
+  seed=1  givens=305  time=10.5s
+
+============================================================
+Generating 3 templates for expert (target=298)
+============================================================
+  [expert] seed=99  check 332: 23.7s (removed)  givens=304  total=44s
+  [expert] seed=99  check 333: TIMEOUT(>30s)  givens=304  total=74s
+  [expert] seed=99  check 334: 9.1s (removed)  givens=303  total=83s
+  [expert] seed=99  check 336: 24.1s (removed)  givens=302  total=108s
+  [expert] seed=99  check 337: TIMEOUT(>30s)  givens=302  total=138s
+  [expert] seed=99  check 338: 29.5s (removed)  givens=301  total=168s
+  [expert] seed=99  check 339: TIMEOUT(>30s)  givens=301  total=198s
+  [expert] seed=99  check 340: TIMEOUT(>30s)  givens=301  total=228s
+  [expert] seed=99  check 341: TIMEOUT(>30s)  givens=301  total=259s
+  [expert] seed=99  check 342: TIMEOUT(>30s)  givens=301  total=289s
+  [expert] seed=99  check 343: TIMEOUT(>30s)  givens=301  total=319s
+  [expert] seed=99: ATTEMPT TIMEOUT 319s  givens=301
+[expert] seed=99: 319s  checks=343  slow=4  skipped=7  givens=301
+  -> Template 1 stored (givens=301)
+  [expert] seed=0  check 330: 4.9s (removed)  givens=307  total=11s
+  [expert] seed=0  check 331: 8.0s (removed)  givens=306  total=19s
+  [expert] seed=0  check 332: TIMEOUT(>30s)  givens=306  total=49s
+  [expert] seed=0  check 333: TIMEOUT(>30s)  givens=306  total=79s
+  [expert] seed=0  check 334: 8.3s (removed)  givens=305  total=88s
+  [expert] seed=0  check 335: TIMEOUT(>30s)  givens=305  total=118s
+  [expert] seed=0  check 336: TIMEOUT(>30s)  givens=305  total=148s
+  [expert] seed=0  check 337: 25.6s (removed)  givens=304  total=174s
+  [expert] seed=0  check 338: TIMEOUT(>30s)  givens=304  total=204s
+  [expert] seed=0  check 339: 20.2s (removed)  givens=303  total=225s
+  [expert] seed=0  check 340: TIMEOUT(>30s)  givens=303  total=256s
+  [expert] seed=0  check 341: TIMEOUT(>30s)  givens=303  total=286s
+  [expert] seed=0  check 342: TIMEOUT(>30s)  givens=303  total=317s
+  [expert] seed=0: ATTEMPT TIMEOUT 317s  givens=303
+[expert] seed=0: 317s  checks=342  slow=5  skipped=8  givens=303
+  -> Template 2 stored (givens=303)
+  [expert] seed=1  check 334: 6.6s (removed)  givens=298  total=29s
+[expert] seed=1: 29s  checks=334  slow=1  skipped=0  givens=298
+  -> Template 3 stored (givens=298)
+
+Got 3 expert templates:
+  seed=99  givens=301  time=319.1s
+  seed=0  givens=303  time=316.9s
+  seed=1  givens=298  time=29.2s
+
+Done. Results in c:\Users\richardi\richards_sudoku\_templates_output.json

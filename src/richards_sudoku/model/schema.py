@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-CURRENT_SCHEMA_VERSION: int = 1
+CURRENT_SCHEMA_VERSION: int = 2
 
 
 def add_version(data: dict[str, Any]) -> dict[str, Any]:

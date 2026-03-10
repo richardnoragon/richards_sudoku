@@ -38,6 +38,10 @@ class Palette:
     peer_bg: str        # peer highlight (same row/col/box)
     border: str         # box/region border colour
     thin_border: str    # cell-to-cell border
+    black_cell_bg: str  # Str8ts black cell background
+    cage_member_bg: str # Killer cage member background tint
+    cage_label_color: str  # Killer cage sum label colour
+    cage_dash_pattern: tuple[float, ...]  # dash pattern for intra-cage thin edges
 
 
 LIGHT = Palette(
@@ -57,6 +61,10 @@ LIGHT = Palette(
     peer_bg="#EEF4FF",
     border="#333333",
     thin_border="#BBBBBB",
+    black_cell_bg="#1a1a1a",
+    cage_member_bg="#e8f4e8",
+    cage_label_color="#2a6020",
+    cage_dash_pattern=(4.0, 2.0),
 )
 
 DARK = Palette(
@@ -76,6 +84,10 @@ DARK = Palette(
     peer_bg="#1F2D3D",
     border="#777777",
     thin_border="#444444",
+    black_cell_bg="#0d0d0d",
+    cage_member_bg="#1e3a1e",
+    cage_label_color="#88cc88",
+    cage_dash_pattern=(4.0, 2.0),
 )
 
 

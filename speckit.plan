@@ -1,7 +1,7 @@
 # speckit Plan: richards_sudoku
 
 ## Phases
-1) Foundations (MVP alignment)
+1) Foundations (MVP alignment) — COMPLETE
 - Set up project layout (src/, tests/) with PyQt6 entrypoint and config.
 - Implement core model: board state, candidates, undo/redo (board + pencil), timer, stats.
 - Implement solver/validator (backtracking + constraints) for standard 9x9; seedable generator producing unique solvable puzzles; difficulty placeholder.
@@ -11,41 +11,432 @@
 - Smoke tests: pytest + pytest-qt for render/select/undo/redo; unit tests for solver/generator/persistence round-trip.
 
 2) Variants & Assistance (Beta alignment)
-- Add variant metadata + layouts (Jigsaw masks, Str8ts rules, 1–25 symbols); generate and validate per variant.
-- Expand generator difficulty tuning heuristics; ensure uniqueness/solvability.
-- Implement conflict highlighting across variants.
-- Import/export: JSON primary + text rows with headers (variant, size, seed, difficulty); prompt paths; validation on import.
-- Hint service: runtime-selectable modes (show candidate, auto-fill cell, multi-cell reveal, full walkthrough); tracking + limits.
-- Stats: moves/hints tracked; end-of-game summary.
-- UI polish: variant/difficulty selectors, hint mode selector, status feedback, accessibility checks.
-- Tests: property/scenario suites across variants; fixtures for import/export; UI smoke for hint modes and variant parity.
+- Rename `Variant.EXTENDED` → `Variant.ONE_TO_25` (`"1to25"`) and add `Variant.KILLER = "killer"` to the enum; update all references. (`ONE_TO_25` is the correct Python identifier — `1TO25` starts with a digit and is invalid.) **Silent backward-compat migration (R9 Q7, Option A)**: both `VariantMetadata.from_dict` and `Board.from_dict` substitute `"extended"` → `"1to25"` before `Variant(...)` so existing saves load without error; no `DeprecationWarning`; no schema version bump.
+- Add `is_black: bool = False` to `Cell` dataclass; update `to_dict`, `from_dict`, `copy`, `apply_move`, and `keyPressEvent` guards; also add `if cell.is_black: return` guard in `GameController._on_value_entered` immediately after the existing `if cell.is_fixed: return` guard (R5 Q6, Option A — defence-in-depth mirroring the `is_fixed` pattern); `_on_pencil_toggled` gains the same guard (`if cell.is_black: return`) after its `if cell.is_fixed or cell.value is not None: return` check. (R7 Q1, Option A)
+- Add variant registry at `services/variant_registry.py` mapping `Variant` to metadata factories and variant-constraint callbacks. (Q7, Option C — services layer already imports from model; avoids making `types.py` import generator/solver modules.) Factory signature: `factory(size: int) -> VariantMetadata`, returning a partial stub populated later by the background worker or dialog; all four in-scope variants (Standard, Jigsaw, Str8ts, Killer) register a factory, including Jigsaw (needed to supply a partial stub to `JigsawWorker`); constraint-validator signature unchanged. (R7 Q3, Option A; R7 Q5a = yes; R7 Q5b; R7 Q5c)
+- Refactor `GameController.new_game` signature to `new_game(meta: VariantMetadata, difficulty: str, seed: int | None = None, hint_limit: int | None = 3)` — `hint_limit = None` means unlimited; positive int = cap; controller stores and enforces on every `hint()` call; `hint(mode: str)` receives mode explicitly (R8 Q5, Option A). Remove the internal `standard_9x9()` default. **This refactor is atomic (Q8, Option A)**: the `new_game()` signature change, the `NewGameDialog` implementation, and all `main.py` call-site updates are all delivered in the same batch.
+- `VariantMetadata.__post_init__` treats `region_layout = []` as a valid "not yet generated" sentinel (empty list bypasses size-consistency check); workers replace `meta.region_layout` in-place after generation; all non-empty layouts continue to be validated. (R8 Q1, Option A) `NewGameDialog` hint limit spinner: `None` = unlimited, positive int = cap; passed as `hint_limit` kwarg to `new_game()`. (R8 Q2, Option A; R8 Q4, Option A)
+- **Str8ts mask ownership (R8 Q3, Option A)**: `Str8tsWorker` calls `Str8tsMaskGenerator(seed, difficulty)` and writes result into `meta.constraints["black_cells"]` before calling `generate_puzzle`; `generate_puzzle` only reads the mask; `generate_puzzle` pre-processing step (when `meta.name == Variant.STR8TS`) reads `meta.constraints["black_cells"]`, excludes positions from `empties`, seeds given black cells.
+- Update `_fill_grid`, `generate_solution`, and `generate_puzzle` using an **additive, backward-compatible** approach (Q1, Option A): add `meta: VariantMetadata | None = None` and `constraint_ok: Callable[[VariantMetadata, Grid, int, int, int], bool] | None = None` as keyword-only parameters defaulting to `None`; all existing positional call sites require zero changes. `_fill_grid` also gains `cancel_flag: list[bool] | None = None` (checked every 1 000 recursive calls) for Jigsaw cancel support (Q6, Option A). **Jigsaw passes `None`** for `constraint_ok` — the irregular `region_layout` fed into `_build_peer_cache` is sufficient; no Jigsaw callback is registered. Str8ts and Killer each register a callback in the variant registry.
+- Create \solver/variant_generators.py\ housing \JigsawRegionGenerator\, \Str8tsMaskGenerator\, and \CagePartitioner\ as co-located classes; imported by \generator.py\ and ew_game_dialog.py\ as needed. (R6 Q6, Option C) Clue counts for all variants follow `_DIFFICULTY_GIVENS = {easy: 40, medium: 32, hard: 27, expert: 23}` (Str8ts measured over white cells only; Killer during initial digit-removal phase, with Hard/Expert `is_fixed` semantics subsequently overriding); no variant-specific table needed. (R7 Q4, Option A)
+- Extend `update_all_candidates` to be variant-aware: add `not cell.is_black` guard (cells unconditionally skipped, consistent with `is_fixed` guard); Str8ts straight-window candidate filtering for white cells; Killer lightweight sum-feasibility filter (exclude `v` when `partial_sum + v > cage_sum` or `remaining_cells × max_val < remaining_needed`; no permutation enumeration in continuous updates); applied on every call.
+- Conflict detection made fully **board-wide and continuous**: replace selection-relative `_conflict_cells` helper in `grid_widget.py` with `_all_conflict_cells(board, size, region_layout)` that returns every cell involved in any row/column/region duplication conflict on the board, regardless of selection; both cells in each conflicting pair are highlighted; Str8ts straight integrity and Killer partial-cage-sum invalidity checks are also board-wide, firing on every board refresh (no separate "Check" action). (R8 Q6, Option A) `_all_conflict_cells` computed **unconditionally when `meta is not None`** — always visible regardless of selection; player loading a puzzle with pre-existing conflicts sees them immediately. (R9 Q9, Option A)
+- Hint lock: after any hint fills a cell, immediately set `cell.is_fixed = True` to prevent the player overwriting or erasing it (all variants).
+- **Jigsaw**: `JigsawRegionGenerator` (seeded cell-swap, BFS connectivity, difficulty-scaled: Easy 1–2 swaps → Expert fully irregular); **no variant-constraint callback — irregular `region_layout` via peer-cache is sufficient, Jigsaw passes `None`**; background worker using Qt `moveToThread` pattern (`JigsawWorker(QObject)` moved onto `QThread`) with **cancel via `cancel_flag: list[bool]`** injected into `_fill_grid` (Q6, Option A) — `_fill_grid` checks `cancel_flag[0]` every 1 000 recursive calls and returns `False` immediately if set; `JigsawWorker.cancel()` sets the flag; the same `cancel_flag` propagates to `_count_solutions` and `_has_unique_solution` (both gain `cancel_flag: list[bool] | None = None`; return 0/False on cancel); `generate_puzzle` passes the same flag to both (R6 Q5, Option A); when `_count_solutions` returns `0`, `generate_puzzle` checks `cancel_flag[0]` to distinguish cancellation (`True` → propagate upward without retrying) from a legitimately unfillable grid (`False` → increment seed and retry normally) (R7 Q2, Option A); progress spinner dialog dismissable via Escape/Cancel; per-cell-edge border rendering via `_draw_edges(painter, size, cell_size, edge_thickness, pal, dash_thin: bool = False)` where `edge_thickness: dict[tuple[int,int,str], bool]` is pre-built by `_draw_board` (Q5, Option B); `_draw_board` passes `dash_thin=(meta.name == Variant.KILLER)` so `_draw_edges` is a pure rendering function with no variant logic (GQ-1, Option A); `region_layout` stored at its existing top-level position in `variant_meta` JSON, not inside `constraints` dict; E2 is validation-only (VQ-3, Option A); import/export compact row-digit string. **Dialog result (R5 Q1, Option A)**: `NewGameDialog` exposes `.meta: VariantMetadata` and `.difficulty: str` as read-only properties; `MainWindow._on_new_game` reads them synchronously after `dialog.exec()` returns `Accepted` — no signal emitted for the result. **Worker ownership (R5 Q2, Option A)**: `NewGameDialog` owns the `JigsawWorker` + `QThread`; after the user confirms Jigsaw, the dialog transforms its own UI into spinner state, starts the worker, and only calls `self.accept()` after `worker.finished(region_layout)` fires; Cancel/Escape calls `worker.cancel()` only, never `accept()`. **Edge key convention (R5 Q4, Option B)**: `(r, c, "H")` is the horizontal edge above row `r` (between row `r−1` and `r`); `(r, c, "V")` is the vertical edge to the left of col `c` (between col `c−1` and `c`); outer boundaries at `r == 0` or `c == 0` always thick.
+- **Str8ts**: `Str8tsMaskGenerator` (seeded; non-trivial straight = length ≥2, R6 Q3a; mask density difficulty-dependent: fewer black cells Easy → more Hard/Expert, R6 Q3b); **`generate_puzzle` pre-processing step** (when `meta.name == Variant.STR8TS`): pre-populate given-digit black cells (`is_fixed = True`) and remove black-cell positions from `empties` before `_fill_grid`; **post-validate consecutiveness check after fill** (Q2, Option A): verify every white-cell straight is consecutive; if any fails, retry `_fill_grid` with seed + retry_count (max 50); no Str8ts variant-constraint callback; straight-validity check in solver/validator for both rows and columns; difficulty-dependent given black-cell digits (Easy exposes most, Hard/Expert none); `is_black = True` on all black cells drives rendering (background priority chain: `selected > conflict > peer > cage_member > fixed > is_black > base` — R4 Q4 + R5 Q3, Option A) and edit-guard regardless of `is_fixed`; `Palette` gains four new fields: `black_cell_bg`, `cage_member_bg`, `cage_label_color`, `cage_dash_pattern: tuple[float, ...] = (4.0, 2.0)` — both `LIGHT` and `DARK` instances updated (Q3, Option A; D1 updated); black cells in selected row/col highlighted as peers; `_WorkingGrid.__init__` zeros candidate sets for `is_black = True` cells before technique loop; `_WorkingGrid.__slots__` gains `black_cells: frozenset[tuple[int,int]]`; `is_solved()` and `_has_empty_candidates()` exclude `black_cells` positions (R6 Q1, Option A); `black_cells` + `black_givens` in `constraints` dict (no schema bump); mask row string import/export format.
+- **Killer**: `CagePartitioner` (seeded flood-fill using the **same `random.Random(puzzle_seed)` RNG** passed through from `generate_puzzle` — single RNG drives all three phases: fill, partition, clue removal; no separate cage salt; R8 Q9, Option A); difficulty-sized cages; cage-aware solver with early sum pruning; uniqueness via `_count_solutions` / `_has_unique_solution` extended with the same optional `constraint_ok` callback as `_fill_grid`; `is_fixed` per difficulty (Easy single-cell cages fixed; Medium: sort cages ascending by size, take first `floor(len(cages)×0.3)` cages, mark `is_fixed = True`; Hard/Expert all editable); `_WorkingGrid` init: zero candidates for `is_black = True` cells; Killer-specific two-step seeding (R6 Q2, Option C): (1) `set_value()` for single-cell cages; (2) one pass of `_killer_cage_step()` + naked-singles propagation with `set_value()` for forced cells — in addition to `is_fixed` clues; `is_complete` also checks cage sums (**inline in `GameController.is_complete`** — after `validate()` passes, if `self._meta.name == Variant.KILLER` iterate cage targets; `solver.validate()` not extended; R5 Q5, Option A); `_KillerCage` SE permutation cap (default 10 000); on reaching cap return \[grid.candidates[r][c].copy() for (r,c) in cells]\u2014safe, preserves narrowed candidates (R6 Q4, Option C); cage sum overlay (topmost-leftmost = row-major minimum; ~20–25% height); all cage cells shift their candidate mini-grid rect by the cage-label height uniformly, regardless of whether they hold the cage-sum label (VQ-2, Option B); unified `_draw_edges` renders cage boundaries using **same thick pen as box borders** (no separate style — Killer uses standard 3×3 regions so box borders already bound different cages); conflict detection extended; cage member highlight on selection — `cage_member_bg` tint sits between `peer` and `fixed` in `_draw_board` chain (R5 Q3, Option A): `selected > conflict > peer > cage_member > fixed > is_black > base`; cages in `constraints` dict (no schema bump).
+- Schema version-neutral: all variant fields live inside existing `constraints` dict; no schema version bump needed.
+- Import/export: JSON primary; text format with per-variant headers; validate on import; prompt for path.
+- Hint service: runtime-selectable modes (show candidate, auto-fill cell, multi-cell reveal, full walkthrough); hint lock post-fill; tracking + limits; variant-aware.
+- Stats: moves/hints tracked; **custom `GameCompleteDialog(QDialog)` subclass** (R9 Q4, Option A) using `QVBoxLayout` with labels for SE score/label, time, moves, hints; three `QPushButton` objects: **OK** (`reject()`), **New Game** (`done(Result.NEW_GAME)`), **Restart** (`done(Result.RESTART)`); `MainWindow._on_game_complete` dispatches on result code. (R7 Q9, Option C; R9 Q4, Option A)
+- UI polish: `NewGameDialog` as single entry point; variant selector includes 1–25 **greyed out / disabled in Beta** (implemented in a later sub-phase); hint mode UI: **`QButtonGroup` of four radio buttons in the status bar** (R9 Q5, Option C); all four modes implemented in Beta (R9 Q3, Option A): `auto_fill` (fill+lock 1 cell, decrements counter), `show_candidate` (reveal candidates, no fill, no decrement), `multi_reveal` (fill+lock 3 cells, decrements counter), `walkthrough` (SE-guided highlight, no fill, no decrement); per-game hint limit spinner ("Hints: [3]▲▼ / Unlimited") in `NewGameDialog` — `None` = unlimited, positive int = cap (R8 Q4, Option A); selected limit passed to `GameController.new_game(..., hint_limit=N)` (R8 Q2, Option A; R6 Q10, Option C); **Restart** menu item in Game menu with two sub-actions — (a) **Restart** (keep timer): reset player edits to initial clue state; (b) **Restart and Reset Timer**: same plus timer reset to zero; move/hint counters not reset in Beta (R6 Q9, Option A); undo/redo stack **cleared** on both sub-actions (R7 Q6, Option B); background-worker spinner for Str8ts (`Str8tsWorker`) and Killer (`KillerWorker`) in addition to Jigsaw — same `moveToThread` + cancel pattern (R6 Q8, Option B); Str8ts/Killer retry loops use fresh `cancel_flag = [False]` per attempt plus `_stop` flag; `CagePartitioner` accepts optional `cancel_flag`, checked during flood-fill (R7 Q8a, Option C; R7 Q8b, Option C); conflict highlighting is **board-wide**: replace selection-relative `_conflict_cells` with `_all_conflict_cells(board, size, region_layout)` returning every cell involved in any duplication conflict regardless of selection (R8 Q6, Option A); `_all_conflict_cells` computed **unconditionally** when `meta is not None` — always visible (R9 Q9, Option A); arrow keys **stop at grid boundary**, no wrap (R8 Q7, Option A); Tab/Shift-Tab wraps row-major; `_advance_selection` skips Str8ts black cells (move to next non-black in direction; stay if all remaining are black; tab skips black cells in row-major order) (R7 Q7a, Option B; R7 Q7b, Option B); **navigation code structure (R9 Q8, Option B)**: extract `_move_selection(dr: int, dc: int) -> None` helper from `keyPressEvent`; `_advance_selection` gains `skip_black: bool = True`; **worker scope (R9 Q1, Option B)**: workers do only the slow variant-specific step; `generate_puzzle` runs on main thread after dialog closes; **seed pre-generation (R9 Q2, Option A)**: `MainWindow._on_new_game` calls `random.randrange(2**31)` before opening `NewGameDialog`, passes as `initial_seed`, uses same value in `new_game()` call; `hint_limit` persisted with **no schema version bump** (R9 Q6, Option A): `_serialize` writes `"hint_limit": null/N`; `_deserialize` uses `data.get("hint_limit", 3)`; `SaveState` gains `hint_limit: int | None = 3`; schema stays v2; `_can_extend_straight(placed, length, v) -> bool` shared helper used by both `update_all_candidates` and `_Str8tsRun` (R8 Q8, Option A); text export: header block + digit rows (R8 Q10, Option A); status feedback; accessibility checks across all variants.
+- Tests: property/scenario suites across Standard, Jigsaw, Str8ts, Killer; per-technique SE fixtures; `_WorkingGrid` Killer seeding tests; import/export fixtures; UI smoke for new-game dialog, Jigsaw cancel, all variants, conflict highlights.
+- [SE] SukakuExplainer difficulty engine — see dedicated section below.
+
+2.5) Extended Variants
+- Add `Variant.CODEWORDS = "codewords"`, `Variant.KENKEN = "kenken"`, `Variant.KAKURO = "kakuro"` to the enum; register factories and callbacks in the variant registry; enable each option in `NewGameDialog` as its batch completes.
+- **1–25 (ONE_TO_25)**: enable the already-present greyed-out option. Add `OneToTwentyFiveWorker` (same `moveToThread` + cancel pattern). Auto-scale `cell_size` for 25×25; 2-digit symbol display; `box_rows = box_cols = 5` for thick borders. Performance budget: generation < 30 s; `grade()` < 1 s.
+- **Codewords**: `CodewordsGenerator` — standard 9×9 fill + random A–I → 1–9 bijection + difficulty-scaled `given_mappings` reveal. `CodewordsWorker`. Letter-display rendering layer (no model changes, view-only). Codebook Panel UI widget. `_CodewordsMapping` SE technique (weight 1.3). Persist `codebook` and `given_mappings` in constraints dict.
+- **KenKen**: `KenKenCagePartitioner` + `KenKenWorker`. Latin-square backtracking (no box peers when `has_box_regions = False`). Cage operations +/−/×/÷; targets computed from solution. `_KenKenCage` SE technique (weight 1.9). `is_complete` inline cage-arithmetic check. `_draw_edges` reused for cage boundaries with operation+target label.
+- **Kakuro**: `KakuroTemplateLibrary` + `KakuroFillGenerator` + `KakuroWorker`. Crossword-style black/white grid; run-sum + no-repeat-per-run constraints. Diagonal clue labels in clue-bearing black cells. `_KakuroRun` SE technique (weight 2.1). `is_complete` inline run-sum check. `_move_selection` skip-black logic reused. Persist `clues`, `black_cells`, `clue_positions` in constraints dict.
+- All four variants integrate via the existing variant registry, background-worker, `_draw_edges`, SE grader, and persistence patterns from Beta. No schema version bump required for any new variant.
+- Tests: see Batches J–N and EV-T1–EV-T6 in `speckit.tasks`.
 
 3) Performance & Hardening
 - Benchmarks to enforce targets (<200ms validate, <2s solve 9x9; <300ms persistence typical); profile hot paths.
 - Memory guards on undo/redo and candidate tracking (esp. 1–25).
 - Robust error handling for malformed imports; deterministic seeds in tests.
+- Benchmark SE grader (<100ms for typical 9x9); guard against slow cage permutation on large Killer grids.
 - Documentation: module boundaries, data formats, extension points.
 
 4) Future-ready (Full release prep)
 - Hooks for puzzle editor, online sharing, multiplayer, cloud saves, mobile-friendly UI.
 - Theming extensibility (palette/fonts to be supplied later); i18n hooks (English-only default).
 - Additional solver optimizations for large grids.
+- [SE] Advanced SE techniques: XY-Wing, XYZ-Wing, Unique Rectangles, BUG, Forcing Chains (see SE section).
+
+---
+
+## SukakuExplainer (SE) Difficulty Engine
+
+### Overview
+`services/difficulty_se.py` implements a SE-style grader that simulates human solving techniques
+in ascending difficulty order. The puzzle's SE score is the **weighted average** of all technique
+applications (sum of step weights / step count), capped at 8.0.  Score maps to a category label.
+
+### Scoring Algorithm
+```
+score = sum(weight_i for each step i) / total_step_count
+score = min(score, 8.0)          # cap at _BEYOND_WEIGHT
+```
+- Only `cell.is_fixed` clues are seeded; player values are ignored so the rating reflects
+  intrinsic puzzle difficulty, not solve progress.
+- If a contradiction is detected (empty candidate set) → `(8.0, "Invalid")`.
+- If no technique fires and the puzzle is unsolved → `(8.0, "Extreme")`.
+- If the board has no empty cells at start → `(0.0, "Unknown")`.
+
+### Category Thresholds
+| Score     | Label   |
+|-----------|---------|
+| ≤ 0.0     | Unknown |
+| ≤ 2.0     | Easy    |
+| ≤ 4.0     | Medium  |
+| ≤ 6.0     | Hard    |
+| > 6.0     | Extreme |
+
+### Technique Registry (implemented, ascending weight)
+| # | Class                  | Name                    | Weight | Notes                        |
+|---|------------------------|-------------------------|--------|------------------------------|
+| 1 | `_LastValue`           | Last Value              | 1.0    | Last empty cell in a unit    |
+| 2 | `_HiddenSingleBlock`   | Hidden Single (Block)   | 1.2    | Region units only            |
+| 3 | `_HiddenSingleLinear`  | Hidden Single (Row/Col) | 1.5    | Row/col units only           |
+| 4 | `_Str8tsRun`           | Str8ts Run              | 1.7    | Str8ts variant only          |
+| 5 | `_KillerCage`          | Killer Cage             | 1.9    | Killer variant only          |
+| 6 | `_NakedSingle`         | Naked Single            | 2.3    |                              |
+| 7 | `_Pointing`            | Pointing                | 2.6    | Region → row/col locked cand |
+| 8 | `_Claiming`            | Claiming                | 2.8    | Row/col → region locked cand |
+| 9 | `_NakedPair`           | Naked Pair              | 3.0    |                              |
+|10 | `_XWing`               | X-Wing                  | 3.2    | Fish degree 2                |
+|11 | `_HiddenPair`          | Hidden Pair             | 3.4    |                              |
+|12 | `_NakedTriple`         | Naked Triple            | 3.6    |                              |
+|13 | `_Swordfish`           | Swordfish               | 3.8    | Fish degree 3                |
+|14 | `_HiddenTriple`        | Hidden Triple           | 4.0    |                              |
+|15 | `_NakedQuad`           | Naked Quad              | 5.0    |                              |
+|16 | `_Jellyfish`           | Jellyfish               | 5.2    | Fish degree 4                |
+|17 | `_HiddenQuad`          | Hidden Quad             | 5.4    |                              |
+
+### Variant Support (implemented)
+- **Standard / Jigsaw**: region-agnostic unit set; all techniques apply.
+- **Str8ts**: `_Str8tsRun` fires when `meta.constraints["black_cells"]` lists `[row, col]` pairs.
+  Eliminates candidates outside valid consecutive-run windows per line segment.
+- **Killer**: `_KillerCage` fires when `meta.constraints["cages"]` is a list of
+  `{"cells": [[r,c],...], "sum": N}` dicts. Uses permutation enumeration to restrict
+  per-cell candidates to values appearing in any valid cage assignment.
+
+### Public API
+```python
+from richards_sudoku.services.difficulty_se import grade, score_to_label
+
+score, label = grade(board, meta)   # -> (float, str)
+label = score_to_label(score)       # "Easy" | "Medium" | "Hard" | "Extreme" | "Unknown"
+```
+
+### Internal Architecture
+- `_WorkingGrid`: mutable simulation copy seeded from `cell.is_fixed` clues only.
+  Tracks `values[r][c]`, `candidates[r][c]`, unit/peer maps, variant name and constraints.
+- `_build_unit_groups(size, region_layout)`: produces row/col/region unit lists.
+- `_build_peer_map(size, all_units)`: cell → frozenset-of-peers mapping.
+- Elimination helpers (`_eliminate_from_unit`, `_reduce_cells_to`, `_elim_val_in_*`):
+  shared across technique implementations to avoid duplication.
+- `_TECHNIQUES` list drives the grader loop; adding a new technique = append a new class
+  instance at the correct weight position.
+
+### Status: IMPLEMENTED (core engine)
+
+### Remaining SE Integration Work
+1. **UI wiring** — display `(score, label)` in the PyQt6 status bar; recompute on new game
+   and on puzzle load (call `grade(board, meta)` in `GameController` after generation/load).
+2. **Tests** — unit tests for `grade()` against known-difficulty fixtures; test each technique
+   fires on a minimal puzzle; test variant paths (Str8ts run, Killer cage).
+3. **Advanced techniques** (future, weight 5.5+) — expand `_TECHNIQUES` in order:
+   - XY-Wing (≈5.6): pivot {X,Y} + two wings {X,Z}/{Y,Z}; eliminate Z from common peers.
+   - XYZ-Wing (≈5.8): pivot {X,Y,Z} + wings {X,Z}/{Y,Z}; eliminate Z from common peers.
+   - Unique Rectangle types 1–4 (≈6.0–6.5): detect deadly pattern; restrict candidates.
+   - BUG (Bivalue Universal Grave) (≈6.5): all but one unsolved cell is bivalue; force placement.
+   - Aligned Pair Exclusion (≈6.5–7.0): pairwise constraint elimination across aligned cells.
+   - Forcing Chains / Nishio (≈7.0+): assumption-based chain contradictions.
+4. **Calibration** — benchmark SE scores against reference puzzle sets to validate weight
+   assignments; adjust thresholds if Hard/Extreme boundary drifts for tested variants.
+5. **Performance guard** — add benchmark test: `grade()` on a 9x9 puzzle must complete
+   in < 100ms; cage permutation capped for large Killer cages (> 5 cells).
+
+---
 
 ## Work Breakdown (initial tasks)
-- Bootstrap repo: venv/pip already set; add src/tests scaffolding and tooling config (pytest, pytest-qt, hypothesis optional).
-- Implement core types: Cell, Board, Move, VariantMetadata; JSON schema versioning helper.
-- Solver/validator and standard generator with seed; tests for uniqueness/solvability.
-- Persistence layer with atomic writes; round-trip tests.
-- UI skeleton: main window, grid widget, command actions (new/load/save/import/export/hint/pencil/undo/redo), keyboard shortcuts.
-- State services: undo/redo stack (board+pencil), hint service stub with mode selection, conflict detector.
-- Basic styling: light/dark theme, Arial, font scaling min 6pt; keyboard-only navigation.
-- Connect flows: new game -> generate -> render; edit -> undo/redo; save/load -> restore timer/stats/candidates.
-- Add variant registry and layouts; extend generator/solver to Jigsaw, Str8ts, 1–25; import/export headers.
-- Hint modes implementation with tracking and limits; end-of-game stats dialog.
-- Performance harness and benchmarks; enforce budgets.
+
+### Phase 1 — Foundations [ALL DONE]
+
+- Bootstrap repo: venv/pip already set; add src/tests scaffolding and tooling config (pytest, pytest-qt, hypothesis optional). [DONE]
+- Implement core types: Cell, Board, Move, VariantMetadata; JSON schema versioning helper. [DONE]
+- Solver/validator and standard generator with seed; tests for uniqueness/solvability. [DONE]
+- Persistence layer with atomic writes; round-trip tests. [DONE]
+- UI skeleton: main window, grid widget, command actions (new/load/save/import/export/hint/pencil/undo/redo), keyboard shortcuts. [DONE]
+- State services: undo/redo stack (board+pencil), hint service stub with mode selection, conflict detector. [DONE]
+- Basic styling: light/dark theme, Arial, font scaling min 6pt; keyboard-only navigation. [DONE]
+- Connect flows: new game -> generate -> render; edit -> undo/redo; save/load -> restore timer/stats/candidates. [DONE]
+- SE grader core engine: `difficulty_se.py` with 17 techniques, variant-specific paths, public `grade()` API. [DONE]
+- Wire SE score to UI: call `grade()` in controller on new game / load; show score + label in status bar. [DONE]
+
+### Phase 2 — Variants & Assistance (Beta)
+
+Batches are strictly ordered by dependency; complete each batch before starting the next.
+Batches A and D have no external dependencies and may start immediately.
+
+---
+
+#### Batch A — Model & Enum  *(no dependencies)*
+
+**File: `model/types.py`** — 6 changes
+
+1. Rename `EXTENDED = "extended"` → `ONE_TO_25 = "1to25"` and add `KILLER = "killer"` to the `Variant` enum.
+2. Add `is_black: bool = False` field to the `Cell` dataclass (after `is_fixed`).
+3. Update `Cell.to_dict()`: include `"is_black": self.is_black`.
+4. Update `Cell.from_dict()`: read `data.get("is_black", False)`.
+5. Update `Cell.copy()`: pass through `is_black=self.is_black`.
+6. `VariantMetadata.__post_init__`: add `if not self.region_layout: return` sentinel before the size/length validation block (so an empty-list `region_layout` is accepted as a pre-population stub).
+7. `VariantMetadata.from_dict` and `Board.from_dict`: before calling `Variant(data["name"])` / `Variant(data["variant"])`, substitute `"extended"` → `"1to25"` silently (R9 Q7 migration).
+
+---
+
+#### Batch B — Generator Extensions  *(depends on A)*
+
+**New file: `solver/variant_generators.py`**
+
+- `JigsawRegionGenerator(size: int, seed: int, difficulty: str)`:
+  - Start from row-band regions; iteratively swap adjacent border cells between neighbouring regions while preserving BFS 4-connectivity for both affected regions.
+  - Repeat until a difficulty-scaled number of swaps is accepted.
+  - Expose `.generate() -> list[list[int]]` returning a `size×size` region-id grid.
+- `Str8tsMaskGenerator(size: int, seed: int, difficulty: str)`:
+  - Place black cells in a point-symmetric pattern using seeded RNG.
+  - Density scales with difficulty (Easy ≈ 10 %, Hard ≈ 20 %).
+  - Guarantee each straight segment (maximal run of white cells in the same row/column) has length ≥ 2.
+  - Expose `.generate() -> set[tuple[int, int]]` returning black cell coordinates.
+- `CagePartitioner(size: int, seed: int, rng: random.Random)`:
+  - Flood-fill partitioning from the same `rng` instance already used for puzzle generation (R8 Q9).
+  - Target cage size drawn from a weighted distribution (≤ 5 cells).
+  - Expose `.partition(solution: list[list[int]]) -> list[dict]` returning a list of `{"cells": [(r,c),...], "sum": int}` dicts.
+  - Accept optional `cancel_flag: list[bool] | None = None`; check before each new cage.
+
+**File: `solver/generator.py`** — 6 additive changes (all backward-compatible defaults)
+
+1. `_fill_grid(grid, empties, idx, symbols, peer_cache, rng, *, meta=None, constraint_ok=None, cancel_flag=None)`:
+   - Check `cancel_flag[0]` every 1 000 recursive calls; return `False` immediately if set.
+   - After placing `val`, call `constraint_ok(meta, grid, r, c, val)` if not `None`; skip `val` if it returns `False`.
+2. `_count_solutions(grid, empties, idx, symbols, peer_cache, *, cancel_flag=None, constraint_ok=None) -> int`:
+   - Check `cancel_flag[0]` every 1 000 calls; return `0` on cancellation.
+   - Accept `constraint_ok` and pass it into the backtracking loop so Killer uniqueness-check is cage-aware (Q4, Option A).
+3. `_has_unique_solution(..., *, cancel_flag=None, constraint_ok=None) -> bool`:
+   - Pass both `cancel_flag` and `constraint_ok` through to `_count_solutions`.
+4. `generate_solution(size, region_layout, symbols, seed=None, *, meta=None, constraint_ok=None) -> Grid`:
+   - Pass `meta` and `constraint_ok` through to `_fill_grid`.
+5. `generate_puzzle(size, region_layout, symbols, seed=None, difficulty="medium", *, meta=None, constraint_ok=None, cancel_flag=None)`:
+   - Pass all three new params through to `_fill_grid`, `_count_solutions`, `_has_unique_solution`.
+   - **Str8ts pre-processing** (when `meta.name == Variant.STR8TS`): (1) pre-populate black cells that carry a given digit (mark `is_fixed=True`); (2) remove all black-cell positions from `empties` before `_fill_grid` is called; (3) DC3 black-cell digit exposure — use a seeded-random shuffle of the black-cell list, select the exposure subset per difficulty tier, then write `[[r, c, v], …]` into `meta.constraints["black_givens"]` from the solution (GQ-5, Option B — `generate_puzzle` owns DC3).
+   - **Str8ts post-validate consecutiveness check**: after `_fill_grid`, verify every white straight is consecutive; retry with `seed + retry_count` up to 50 times if any fail.
+   - **Killer skip-partition logic** (when `meta.constraints.get("cages")` is already populated by `KillerWorker`): skip `CagePartitioner`; pass existing cages to uniqueness check via `constraint_ok`; if uniqueness fails (not cancelled), return a sentinel so the caller (`KillerWorker` retry loop) can retry with the next seed; after successful uniqueness, apply DC2 difficulty-based `is_fixed` assignment before returning `(puzzle, solution)` — Easy: single-cell cages `is_fixed=True`; Medium: sort cages ascending by size, take first `floor(len(cages)×0.3)` cages all cells `is_fixed=True`; Hard/Expert: all `is_fixed=False` (GQ-4, Option C — `generate_puzzle` owns DC2).
+   - Distinguish cancellation from unfillable: after `_fill_grid` returns `False`, check `cancel_flag[0]`; re-raise a `GenerationCancelled` exception rather than `ValueError`.
+6. `check_unique(meta: VariantMetadata, board_state: list[list[int]], constraint_ok: Callable | None = None, cancel_flag: list[bool] | None = None) -> bool`:
+   - Public wrapper delegating directly to `_has_unique_solution`; canonical entry point for complete-pipeline workers (`OneToTwentyFiveWorker`, `KenKenWorker`, `KakuroWorker`, `CodewordsWorker`) that bypass `generate_puzzle` (GQ-2, Option B — added in Beta).
+
+---
+
+#### Batch C — Services  *(depends on A)*
+
+**New file: `services/variant_registry.py`**
+
+- `REGISTRY: dict[Variant, dict]` mapping each `Variant` to a dict with keys `"factory"`, `"constraint_ok"` (or `None`), and optionally `"constraint_ok_factory"` for variants whose constraint callback must be built from the final `meta` at runtime.
+- `factory(size: int) -> VariantMetadata` — returns a default `VariantMetadata` for that variant (e.g. standard 9×9 row-bands for STANDARD; empty `region_layout=[]` stub for JIGSAW; empty `constraints={}` stub for STR8TS/KILLER).
+- STANDARD → `{"factory": standard_factory, "constraint_ok": None}`.
+- JIGSAW → `{"factory": jigsaw_factory, "constraint_ok": None}` (region constraint is implicit in `region_layout`).
+- STR8TS → `{"factory": str8ts_factory, "constraint_ok": str8ts_constraint_ok}`.
+- KILLER → `{"factory": killer_factory, "constraint_ok": None, "constraint_ok_factory": lambda meta: _killer_constraint_ok(meta.constraints["cages"])}` (GQ-3, Option A — established template for KenKen/Kakuro).
+- `GameController.new_game` uses a two-branch lookup: `factory_fn = reg.get("constraint_ok_factory"); constraint_ok = factory_fn(meta) if factory_fn else reg.get("constraint_ok")`.
+
+**File: `services/candidates.py`** — 3 additions
+
+1. At the top of the inner loop (immediately after `cell = board.cell(r, c)`): add `if cell.is_black: cell.candidates = set(); continue`.
+2. After standard peer elimination for STR8TS variant: apply `_can_extend_straight(placed, length, v)` per straight window; retain `v` in candidates only if the helper returns `True`.
+3. After standard peer elimination for KILLER variant: apply lightweight sum-feasibility check — for each cage containing `(r, c)`, remove `v` from candidates when `partial_sum + v > cage_sum` or when `(remaining_cells - 1) * max_symbol < needed_residual`.
+
+**New file (or inline in `candidates.py`): `services/str8ts_utils.py`**
+
+- `_can_extend_straight(placed: list[int], length: int, v: int) -> bool`: returns `True` if adding `v` to an in-progress straight of `length` cells still allows a valid consecutive sequence to be completed; mirrors the logic used by the `_Str8tsRun` SE technique.
+
+---
+
+#### Batch D — Theme  *(no dependencies)*
+
+**File: `ui/theme.py`** — 4 new `Palette` fields + values in LIGHT and DARK
+
+Add to `Palette` dataclass (after `thin_border`):
+- `black_cell_bg: str` — background fill for Str8ts black cells.
+- `cage_member_bg: str` — subtle tint applied to all cells in the same Killer cage as the selection.
+- `cage_label_color: str` — colour for the cage-sum label text drawn in the top-left corner of each cage.
+- `cage_dash_pattern: tuple[float, ...] = (4.0, 2.0)` — QPen dash pattern for thin intra-cage dashed edges in Killer and KenKen; accessed by `_draw_edges` when `dash_thin=True` (GQ-1, Option A; prerequisite for G6 per GQ-F).
+
+Assign values:
+- `LIGHT`: `black_cell_bg="#1a1a1a"`, `cage_member_bg="#e8f4e8"`, `cage_label_color="#2a6020"`, `cage_dash_pattern=(4.0, 2.0)`.
+- `DARK`: `black_cell_bg="#0d0d0d"`, `cage_member_bg="#1e3a1e"`, `cage_label_color="#88cc88"`, `cage_dash_pattern=(4.0, 2.0)`.
+
+---
+
+#### Batch E — Persistence  *(depends on A)*
+
+**File: `persistence/persistence.py`** — 3 changes
+
+1. `SaveState.__slots__` + `__init__`: add `hint_limit: int | None = 3`.
+2. `_serialize`: add `"hint_limit": state.hint_limit` to the dict returned (no schema version bump — R9 Q6).
+3. `_deserialize`: add `hint_limit = data.get("hint_limit", 3)` and pass to `SaveState(...)`.
+
+---
+
+#### Batch F — UI Dialogs  *(depends on A, B, C)*
+
+**New file: `ui/game_complete_dialog.py`**
+
+- `class GameCompleteDialog(QDialog)`:
+  - Inner `class Result`: integer constants `OK = 0`, `NEW_GAME = 1`, `RESTART = 2`.
+  - `__init__(self, se_score, se_label, elapsed_seconds, moves, hints_used, parent=None)`.
+  - `QVBoxLayout` with read-only labels for SE rating, elapsed time, moves, hints used.
+  - Three `QPushButton`: "OK" → `reject()`, "New Game" → `self.done(Result.NEW_GAME)`, "Restart" → `self.done(Result.RESTART)`.
+
+**New file: `ui/new_game_dialog.py`**
+
+- `class NewGameDialog(QDialog)`:
+  - Variant selector `QComboBox`: Standard, Jigsaw, Str8ts, Killer; 1–25 entry disabled (grayed out, future).
+  - Difficulty selector `QComboBox`: Easy, Medium, Hard, Expert.
+  - Hint-limit `QSpinBox` with "Unlimited" checkbox: when checked, spinner disabled and value stored as `None`.
+  - OK / Cancel buttons; Cancel (or Escape) calls `worker.cancel()` if a worker is running, then `reject()`.
+  - Read-only properties: `.meta: VariantMetadata`, `.difficulty: str`, `.hint_limit: int | None`.
+  - Worker integration (each `QObject` running on a `QThread`):
+    - `JigsawWorker`: calls `JigsawRegionGenerator(...).generate()`; emits `finished(region_layout: list[list[int]])`; on retry exhaustion (50 attempts without cancel) emits `error("Generation failed — please try again")` (F3 fix).
+    - `Str8tsWorker`: calls `Str8tsMaskGenerator(...).generate()`; writes result into `meta.constraints["black_cells"]`; emits `finished(meta: VariantMetadata)`; on retry exhaustion emits `error("Generation failed — please try again")` (F3 fix).
+    - `KillerWorker`: calls `CagePartitioner(...).partition(solution)`; writes cages into `meta.constraints["cages"]`; emits `finished(meta: VariantMetadata)`; on retry exhaustion emits `error("Generation failed — please try again")` (F3 fix).
+  - `_on_worker_error(msg: str)` in `NewGameDialog` re-enables OK button, shows message in `_status_lbl`, hides progress bar (already implemented; workers need to call it).
+  - Worker scope follows R9 Q1: each worker does **only** the slow variant-specific pre-computation; `generate_puzzle` is called by `new_game` on the main thread after the dialog closes.
+  - Spinner / progress indicator shown while a worker is running; OK button disabled until worker finishes.
+  - On variant change, cancel any running worker and start a new one.
+
+---
+
+#### Batch G — Grid Widget  *(depends on A, D)*
+
+**File: `ui/grid_widget.py`** — 6 changes
+
+1. **Extract `_move_selection(dr: int, dc: int) -> None`** from the arrow-key branch of `keyPressEvent`:
+   - Compute new `(r, c)` by clamping to `[0, size-1]` (no wrap — R8 Q7).
+   - If `skip_black=True` (default), scan forward in the movement direction to the first non-black cell; if none found before the boundary, do not move.
+2. **`keyPressEvent` arrow-key branch**: replace all four inline `nr = (r + dr) % size` / `nc = (c + dc) % size` expressions with a single call to `self._move_selection(dr, dc)`.
+3. **`_advance_selection(delta, skip_black: bool = True)`**: when `skip_black=True`, after computing the candidate next index (row-major), scan forward until a non-black cell is found or the board is exhausted.
+4. **Replace `_conflict_cells` with `_all_conflict_cells(board, size, region_layout, meta: VariantMetadata | None = None) -> set[tuple[int,int]]`** (G8 extension):
+   - Compute board-wide: for every cell with a value, check all peers in row, column, and region; if a duplicate exists, add **both** cells to the conflict set.
+   - When `meta is not None`: additionally run variant-specific checks — (a) Str8ts: flag white cells whose placed value cannot be part of any valid consecutive run in its row or column straight; (b) Killer: flag cage cells whose partial values provably exceed the cage target or leave insufficient candidates to reach it.
+   - Call unconditionally when `meta is not None` in `_draw_board` (R8 Q6, R9 Q9); `_draw_board` passes `meta=self._meta`; store result in `self._conflict_set` and repaint after every board state change.
+5. **Cell background priority chain in `_draw_board`**: update paint order to: `selected > conflict > peer > cage_member > **fixed > is_black** > base`. Blank black cell (`is_black=True, is_fixed=False`): fill with `pal.black_cell_bg`; skip all other backgrounds, candidates, and value text. Given black cell (`is_black=True, is_fixed=True`): use `pal.fixed_bg` (takes precedence — intentional, to visually distinguish clued black cells from unclued ones). *(Note: `fixed > is_black` matches speckit.specify and is intentional; `is_black > fixed` would be a bug.)*
+6. **Add `_draw_edges(painter, size, cell_size, edge_thickness, pal, dash_thin: bool = False) -> None`** (replaces `_draw_lines`):
+   - `dash_thin=True` draws thin intra-cage edges using `pal.cage_dash_pattern`; `_draw_board` passes `dash_thin=(meta.name == Variant.KILLER)` — no variant logic inside `_draw_edges` (GQ-1, Option A).
+   - Pre-computed by `_build_edge_dict(meta, size, box_rows, box_cols) -> dict[tuple[int,int,str], bool]` called from `_draw_board` to keep `_draw_board` readable.
+   - For JIGSAW: `edge_thickness[(r, c, "H"|"V")] = True` (thick) wherever adjacent cells differ in region id.
+   - For KILLER: `edge_thickness[(r, c, "H"|"V")] = True` (thick) at cage boundaries; `False` (thin dashed, driven by `dash_thin`) within a cage.
+   - For STANDARD/STR8TS: `edge_thickness` set by `i % box_rows == 0` / `j % box_cols == 0` arithmetic (existing thick-border logic, now a special case).
+   - `_draw_cage_labels` is **retained unchanged** — cage-sum label rendering is already complete; G6 only removes `_draw_lines` and adds `_draw_edges`/`_build_edge_dict` (VQ-1, Option A).
+   - All cage cells (not just the label cell) shift their candidate mini-grid rect by the cage-label height uniformly; `_draw_candidates` receives an `offset_y` parameter for this (VQ-2, Option B).
+
+---
+
+#### Batch H — Controller  *(ATOMIC — depends on A–G; deliver all 8 changes together)*
+
+**File: `controller/game_controller.py`** — 8 changes
+
+1. **`new_game(meta: VariantMetadata, difficulty: str, seed: int | None = None, hint_limit: int | None = 3) -> None`**:
+   - Replace the current hardcoded `VariantMetadata.standard_9x9()` with the passed `meta`.
+   - Store `self._hint_limit = hint_limit` and `self._hints_remaining = hint_limit` (deep-copy or `None`).
+   - Resolve `constraint_ok` via two-branch registry lookup: `factory_fn = reg.get("constraint_ok_factory"); constraint_ok = factory_fn(meta) if factory_fn else reg.get("constraint_ok")`; pass `meta`, the resolved `constraint_ok`, and `cancel_flag` to `generate_puzzle` (GQ-3, Option A).
+2. **`hint(mode: str) -> bool`** — 4 modes:
+   - `"auto_fill"`: pick one empty cell; set `cell.value = solution[r][c]`; set `cell.is_fixed = True`; decrement `_hints_remaining`; return `True`.
+   - `"show_candidate"`: if no cell is currently selected, return `False` (no-op, no decrement); otherwise reveal candidates for the selected empty cell only; do **not** fill; do **not** decrement; return `True`.
+   - `"multi_reveal"`: fill and lock 3 cells (same logic as `auto_fill` × 3); decrement once per filled cell; return `True`.
+   - `"walkthrough"`: run SE grader to identify the next logical step; emit a highlight + status message; do **not** fill; do **not** decrement; return `True`.
+   - Any mode: if `self._hints_remaining == 0` (i.e. limit exhausted), return `False` without acting.
+3. **`_on_value_entered`**: add `if cell.is_black: return` immediately after the `is_fixed` guard.
+4. **`_on_pencil_toggled`**: add `if cell.is_black: return` immediately after the `is_fixed` guard.
+5. **`is_complete` property**: after calling `validate()`, add an inline Killer cage sum check — for each cage in `meta.constraints.get("cages", [])`, verify that the sum of all cell values equals the declared cage sum; return `False` if any mismatch.
+6. **Instance variables**: add `self._hint_limit: int | None` in `__init__`. (`_hint_mode` is a UI-layer concern — stored on `MainWindow`, not the controller; see Batch I item 3.)
+7. **`_on_game_complete` event** (new private method or signal): after `is_complete` returns `True`, stop the timer, compute SE rating, and emit a signal or call `MainWindow._on_game_complete` via the callback pattern already used for other events.
+8. **`save_game`**: pass `hint_limit=self._hint_limit` to the `SaveState(...)` constructor.
+
+---
+
+#### Batch I — Main Window  *(ATOMIC with H — depends on H)*
+
+**File: `main.py`** — 5 changes
+
+1. **Seed pre-generation**: in `_on_new_game`, compute `initial_seed = random.randrange(2**31)` before opening the dialog (R9 Q2).
+2. **`NewGameDialog` integration**: instantiate `NewGameDialog(initial_seed=initial_seed, parent=self)` in `_on_new_game`; call `exec()`; if result is `QDialog.DialogCode.Accepted`, read `.meta`, `.difficulty`, `.hint_limit` from the dialog; call `self._ctrl.new_game(meta, difficulty, seed=initial_seed, hint_limit=hint_limit)`.
+3. **Hint mode radio buttons**: in `_build_status_bar`, add a `QButtonGroup` of 4 `QRadioButton` widgets ("Auto Fill", "Show Candidates", "Multi Reveal", "Walkthrough") as a status bar widget; store `self._hint_mode: str = "auto_fill"`; connect `toggled` signals to update `_hint_mode`.
+4. **`_on_hint` update**: pass `self._hint_mode` to `self._ctrl.hint(mode=self._hint_mode)`.
+5. **`_on_game_complete` update**: replace the current `QMessageBox.information` with instantiation of `GameCompleteDialog`; call `exec()`; dispatch on result code: `NEW_GAME` → call `_on_new_game()`, `RESTART` → call `self._ctrl.restart_game()` (add stub if missing).
+
+---
+
+#### Tests  *(add incrementally as each Batch is completed)*
+
+- **Batch A tests** (`tests/test_model_types.py` — extend existing):
+  - `Variant.ONE_TO_25` and `Variant.KILLER` round-trip through `Variant(value)`.
+  - `Cell.is_black` serializes/deserializes correctly; defaults to `False`.
+  - `VariantMetadata.__post_init__` accepts empty `region_layout` without raising.
+  - `VariantMetadata.from_dict` with `"name": "extended"` yields `Variant.ONE_TO_25` (migration).
+  - `Board.from_dict` with `"variant": "extended"` yields `Variant.ONE_TO_25` (migration).
+- **Batch B tests** (`tests/test_solver.py` — extend; new `tests/test_variant_generators.py`):
+  - `JigsawRegionGenerator`: result has exactly `size` connected regions; each exactly `size` cells; connectivity holds.
+  - `Str8tsMaskGenerator`: density in expected range; no segment shorter than 2.
+  - `CagePartitioner`: all cells covered exactly once; each cage sum matches sum of given values.
+  - `generate_puzzle` with `cancel_flag=[True]` raises `GenerationCancelled` immediately.
+  - `generate_puzzle` with Str8ts meta produces a puzzle with all straight segments valid.
+- **Batch C tests** (`tests/test_services.py` — extend):
+  - `update_all_candidates` skips black cells (candidates remain empty set).
+  - Str8ts candidate filter removes `v` that cannot extend any straight.
+  - Killer filter removes `v` that would exceed cage sum.
+  - `_can_extend_straight` unit tests against hand-crafted cases.
+- **Batch E tests** (`tests/test_persistence.py` — extend):
+  - `hint_limit=None` and `hint_limit=5` round-trip through `_serialize` / `_deserialize`.
+  - Backward-compat: a v2 save without `"hint_limit"` key deserialises to `hint_limit=3`.
+- **Batch F–I tests** (`tests/test_ui_shell.py` and new `tests/test_wiring.py` — extend):
+  - `NewGameDialog` opens, accepts, and passes `meta`/`difficulty`/`hint_limit` to controller.
+  - `GameCompleteDialog` result codes dispatch correctly in `MainWindow._on_game_complete`.
+  - All four hint modes return expected side-effects (filled vs not, decrement vs not).
+  - `_all_conflict_cells` is non-empty on a board with a known conflict; empty on a valid board.
+- **Performance benchmarks** (`tests/test_performance.py` or inline markers):
+  - `generate_puzzle` for standard 9×9: < 2 s.
+  - `grade()` on a 9×9 puzzle: < 100 ms.
+  - Persistence round-trip (save + load 9×9): < 300 ms.
+  - SE cage permutation capped for Killer cages > 5 cells.
 
 ## Deliverables
 - Running PyQt6 desktop app (single-window) with required MVP/Beta functionality.
 - Versioned JSON/text persistence with prompts.
+- SE difficulty rating displayed in status bar; score recomputed on new game and load.
 - Test suite (unit, property/scenario, UI smoke, perf benchmarks).
 - Documentation for architecture, data formats, variant extension, and usage.
+
+---
+
+## Round 8 Decisions (R8)
+
+| Q | Topic | Decision |
+|---|-------|----------|
+| R8 Q1 | `VariantMetadata` partial-stub sentinel | A — `__post_init__` treats `region_layout = []` as valid sentinel; worker replaces in-place; non-empty layouts validated as before |
+| R8 Q2 | `new_game` hint-limit parameter | A — fourth keyword param: `new_game(meta, difficulty, seed=None, hint_limit: int | None = 3)`; `None` = unlimited |
+| R8 Q3 | Str8ts mask ownership | A — `Str8tsWorker` calls `Str8tsMaskGenerator`, writes result into `meta.constraints["black_cells"]`, then passes `meta` to `generate_puzzle`; generator only reads |
+| R8 Q4 | Hint limit unlimited sentinel | A — `None` = unlimited; positive `int` = cap; persisted as `"hint_limit": null` or `"hint_limit": N` |
+| R8 Q5 | Hint mode selection mechanism | A — `hint(mode: str)` receives mode on each call; `MainWindow` passes from persistent UI toggle (radio/combo) |
+| R8 Q6 | Conflict highlight scope | A — board-wide: replace `_conflict_cells(board, sel, ...)` with `_all_conflict_cells(board, size, region_layout)` scanning all pairs; both cells in every conflict highlighted regardless of selection |
+| R8 Q7 | Arrow key boundary behaviour | A — **stop** at grid boundary (no wrap); Tab/Shift-Tab continues to wrap row-major |
+| R8 Q8 | Str8ts candidate filter algorithm | A — exact per-candidate test via shared `_can_extend_straight(placed, length, v) -> bool` helper; used by both `update_all_candidates` and `_Str8tsRun` SE technique |
+| R8 Q9 | Killer cage RNG seeding | A — single `random.Random(puzzle_seed)` used in sequence for fill → partition → clue removal; no separate cage salt or `cage_seed` |
+| R8 Q10 | Text format structure | A — header block (`variant`, `size`, `seed`, `difficulty`) then digit rows (`0` = empty); variant-specific fields as extra header lines |
+
+## Round 9 Decisions (R9)
+
+| Q | Topic | Decision |
+|---|-------|----------|
+| R9 Q1 | Worker scope Str8ts/Killer | B — workers do only slow variant-specific step; `Str8tsWorker` writes mask → emits `finished(meta)`; `KillerWorker` writes cages → emits `finished(meta)`; `generate_puzzle` called by `new_game` on main thread |
+| R9 Q2 | Seed pre-generation | A — `MainWindow._on_new_game` picks seed before dialog; passes as `initial_seed`; uses same value in `new_game(meta, difficulty, seed=initial_seed, ...)` |
+| R9 Q3 | Hint mode Beta completeness | A — all 4 modes implemented: `auto_fill` (fill+lock 1, decrements); `show_candidate` (reveal, no fill, no decrement); `multi_reveal` (fill+lock 3, decrements); `walkthrough` (SE-guided highlight, no fill, no decrement) |
+| R9 Q4 | End-of-game dialog | A — custom `GameCompleteDialog(QDialog)` with `QVBoxLayout`; three `QPushButton` objects; result codes `OK`/`NEW_GAME`/`RESTART`; `MainWindow._on_game_complete` inspects result |
+| R9 Q5 | Hint mode selector widget | C — `QButtonGroup` of 4 radio buttons added as widget in status bar; `MainWindow` stores `_hint_mode: str` |
+| R9 Q6 | hint_limit schema version | A — no bump; `_serialize` writes `"hint_limit": null/N`; `_deserialize` uses `data.get("hint_limit", 3)`; `SaveState` gains `hint_limit: int | None = 3`; schema stays v2 |
+| R9 Q7 | EXTENDED migration | A — silent substitution in both `from_dict` methods: `"extended"` → `"1to25"` before `Variant(...)`; no `DeprecationWarning`; no schema bump |
+| R9 Q8 | Arrow navigation structure | B — extract `_move_selection(dr: int, dc: int) -> None` from `keyPressEvent`; clamp + black-cell scan; `_advance_selection` gains `skip_black: bool = True`; all arrow-key logic delegates to `_move_selection` |
+| R9 Q9 | Conflict highlight gate | A — `_all_conflict_cells` computed unconditionally when `meta is not None`; always visible regardless of selection; pre-existing conflicts visible on first render |
+

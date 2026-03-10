@@ -414,3 +414,132 @@ class TestGameStats:
         assert stats.moves == 5
         assert stats.hints_used == 2
         assert stats.elapsed_seconds == pytest.approx(10.0)
+
+
+# ---------------------------------------------------------------------------
+# C4: update_all_candidates — variant filters
+# ---------------------------------------------------------------------------
+
+from richards_sudoku.model.types import Variant
+from richards_sudoku.services.str8ts_utils import _can_extend_straight
+
+
+def _str8ts_meta_with_black(black_cells: list[tuple[int, int]]) -> VariantMetadata:
+    """9×9 Str8ts meta with specified black cells."""
+    meta = VariantMetadata.standard_9x9()
+    # Rebuild as Str8ts variant preserving region_layout
+    return VariantMetadata(
+        name=Variant.STR8TS,
+        size=9,
+        symbols=list(range(1, 10)),
+        region_layout=meta.region_layout,
+        constraints={"black_cells": list(black_cells)},
+    )
+
+
+def _killer_meta_with_cages(cages: list[dict]) -> VariantMetadata:
+    """9×9 Killer meta with specified cages."""
+    meta = VariantMetadata.standard_9x9()
+    return VariantMetadata(
+        name=Variant.KILLER,
+        size=9,
+        symbols=list(range(1, 10)),
+        region_layout=meta.region_layout,
+        constraints={"cages": cages},
+    )
+
+
+class TestUpdateAllCandidatesVariantFilters:
+
+    def test_black_cell_gets_empty_candidates(self):
+        meta = _str8ts_meta_with_black([(0, 4)])
+        board = Board(size=9, variant=Variant.STR8TS)
+        board.cell(0, 4).is_black = True
+        update_all_candidates(board, meta)
+        assert board.cell(0, 4).candidates == set()
+
+    def test_non_black_cell_has_candidates(self):
+        meta = _str8ts_meta_with_black([(0, 4)])
+        board = Board(size=9, variant=Variant.STR8TS)
+        board.cell(0, 4).is_black = True
+        update_all_candidates(board, meta)
+        # A non-black cell should still have candidates
+        assert board.cell(0, 0).candidates != set()
+
+    def test_str8ts_filter_removes_impossible_straight_candidate(self):
+        """In a run of 2 cells (row AND col), candidate 9 is impossible when 1 is placed."""
+        # Row run: (0,0)-(0,1) — black cells block cols 2-8 in row 0
+        # Col run: (0,1)-(1,1) — black cells block rows 2-8 in col 1
+        # (0,0) = 1  →  row-run placed=[1], v=9: span=8 ≥ 2 → row rejects 9
+        # (1,1) = 1  →  col-run placed=[1], v=9: span=8 ≥ 2 → col rejects 9
+        black_cells = [(0, c) for c in range(2, 9)] + [(r, 1) for r in range(2, 9)]
+        meta = _str8ts_meta_with_black(black_cells)
+        board = Board(size=9, variant=Variant.STR8TS)
+        for pos in black_cells:
+            board.cell(*pos).is_black = True
+        board.cell(0, 0).value = 1   # row run companion
+        board.cell(1, 1).value = 1   # col run companion
+        update_all_candidates(board, meta)
+        cands = board.cell(0, 1).candidates
+        assert 9 not in cands
+        # 2 must be valid (consecutive with 1 in a run of 2)
+        assert 2 in cands
+
+    def test_killer_filter_excludes_value_exceeding_cage_sum(self):
+        """Single-cell-remaining cage: only exact sum value is valid."""
+        # 2-cell cage with sum=3; first cell has value 1 → second must be 2
+        cages = [
+            {"cells": [(0, 0), (0, 1)], "sum": 3},
+            # fill the rest of the board with trivial cages to ensure full coverage
+        ]
+        # Add dummy single-cell cages for all other cells
+        for r in range(9):
+            for c in range(9):
+                if not (r == 0 and c in (0, 1)):
+                    cages.append({"cells": [(r, c)], "sum": 5})
+        meta = _killer_meta_with_cages(cages)
+        board = Board(size=9, variant=Variant.KILLER)
+        board.cell(0, 0).value = 1
+        update_all_candidates(board, meta)
+        cands = board.cell(0, 1).candidates
+        # Only 2 can complete sum=3 when first cell is 1
+        assert 2 in cands
+        assert 3 not in cands  # 3 would give sum 4, not 3
+        assert 9 not in cands
+
+
+class TestCanExtendStraight:
+
+    def test_empty_placed_any_digit_ok_if_single_cell_run(self):
+        # Length 1: any single digit is a straight on its own
+        for v in range(1, 10):
+            assert _can_extend_straight([], 1, v) is True
+
+    def test_placed_one_adjacent_digit_ok(self):
+        # run length 2, placed=[3] → 2 or 4 can extend
+        assert _can_extend_straight([3], 2, 4) is True
+        assert _can_extend_straight([3], 2, 2) is True
+
+    def test_placed_one_non_adjacent_digit_rejected(self):
+        # run length 2, placed=[1] → 9 cannot form a 2-long consecutive run
+        assert _can_extend_straight([1], 2, 9) is False
+
+    def test_span_too_wide_rejected(self):
+        # placed=[1,5], length=4 → span=5, needs ≤ length-1=3 span
+        assert _can_extend_straight([1, 5], 4, 3) is False
+
+    def test_duplicate_digit_rejected(self):
+        assert _can_extend_straight([5], 2, 5) is False
+
+    def test_full_run_valid(self):
+        # placed=[1,2,3], length=4, v=4 → {1,2,3,4} consecutive
+        assert _can_extend_straight([1, 2, 3], 4, 4) is True
+
+    def test_full_run_out_of_range(self):
+        # placed=[8,9], length=3, v=7 → {7,8,9} valid
+        assert _can_extend_straight([8, 9], 3, 7) is True
+
+    def test_value_beyond_9_impossible(self):
+        # placed=[8,9], length=3, v=10 would be out of 1-9 range
+        # _can_extend_straight works on 1-9; v=10 should return False
+        assert _can_extend_straight([8, 9], 3, 10) is False
