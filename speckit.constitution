@@ -1,30 +1,155 @@
-# speckit Constitution: richards_sudoku
+# **speckit Constitution: richards_sudoku (Refined)**
 
-## Code Quality
-- Preserve modular boundaries: generation, solving, UI, persistence, statistics, and SE difficulty grading must remain decoupled with clear interfaces and no cross-layer side effects.
-- Enforce readability: prefer explicit logic over clever shortcuts; include concise comments only for non-obvious algorithms (solver, generator, SE technique logic, jigsaw/Str8ts/Killer rules).
-- Use typing and validation: type-hint public functions, validate inputs for puzzle size/variant, and fail fast on invalid states.
-- Serialization discipline: JSON save/load/import/export must be versioned and backward compatible; reject malformed payloads safely. Schema version must be incremented whenever the save format gains new fields (e.g. `se_score`/`se_label`).
-- Determinism for reproducibility: generators accept seeds; solver behavior remains stable across runs and OSes.
-- SE engine extensibility: adding a new solving technique requires only (a) implementing a class with a `name`, `weight`, and `apply(grid) -> bool` interface and (b) inserting it into `_TECHNIQUES` at the correct weight position — no other changes needed. Never hardcode technique count or weight values outside `difficulty_se.py`.
+## **1. Purpose**
+The speckit Constitution establishes the enduring governance principles for the Sudoku engine, its variants, and all supporting systems.  
+It defines **what must always be true**, regardless of implementation details, contributors, or future extensions.
 
-## Testing Standards
-- Unit tests cover solver correctness, generator validity (unique/solvable), persistence round-trips (save -> load, including se_score/se_label round-trip), and stats tracking (timer/moves/hints).
-- SE difficulty grader tests: boundary scores for `score_to_label`; `grade()` on known-difficulty fixtures; per-technique minimal fixture (one test per technique class); variant paths (Str8ts run, Killer cage); performance guard (< 100ms for 9×9).
-- Property-based or scenario suites exercise multiple grid sizes and variants (Standard, Jigsaw, Str8ts, Killer, 1–25, Codewords, KenKen, Kakuro) with conflict/constraint checks.
-- UI smoke tests verify grid rendering, selection, highlight behaviors, undo/redo, hint availability, and pencil mark visibility for each variant.
-- Regression harness for import/export: known fixtures must load, validate solvability, and remain playable end-to-end.
-- Performance guards: add tests/benchmarks for solver/runtime budgets to prevent slowdowns; enforce deterministic seeds in tests.
+Operational rules, algorithms, and test matrices are defined in **appendices**, each governed by the C.L.E.A.R. lifecycle.
 
-## User Experience Consistency
-- Grid UX: always highlight selected cell, row, column, and region; pencil marks visually distinct from confirmed entries across themes and variants.
-- Controls parity: keyboard/mouse inputs, undo/redo, hint trigger, and pencil toggle behave the same for all variants and grid sizes.
-- Accessibility and theming: provide light/dark themes, adjustable font sizes, and readable contrast; avoid color-only cues for conflicts.
-- Persistence UX: save/load/import/export flows are discoverable, confirm success/failure, and never discard user progress without explicit consent.
-- Guidance and feedback: in-game help and hint usage counts are visible; conflicts and invalid moves are clearly indicated without blocking navigation.
+---
 
-## Performance Requirements
-- Solver and validator complete typical 9x9 puzzles within interactive latency targets (<200ms for validation, <2s for solve) and scale gracefully for larger grids.
-- UI remains responsive during generation/solve via background work or progress cues; no frozen input during long operations.
-- Save/load/import/export operations complete quickly (<300ms for typical puzzles) and are atomic to prevent data loss.
-- Memory usage stays bounded for large variants ; avoid quadratic blowups in candidate tracking and undo/redo history.
+## **2. Code Quality Principles**
+1. **Layer Integrity**  
+   Core domains — generation, solving, UI, persistence, statistics, and SE difficulty grading — must remain modular, with stable interfaces and no cross‑layer side effects.
+
+2. **Readable, Explicit Logic**  
+   Code favors clarity over cleverness. Non‑obvious algorithms require concise, explanatory comments.
+
+3. **Type Safety & Validation**  
+   Public functions use type hints. All inputs (grid size, variant, payloads) are validated, and invalid states fail fast.
+
+4. **Deterministic Behavior**  
+   Generators accept seeds; solvers behave consistently across platforms.
+
+5. **Extensible SE Engine**  
+   Adding a solving technique must require only:
+   - a class implementing `name`, `weight`, and `apply(grid) -> bool`, and  
+   - insertion into the technique registry.  
+   No other files may depend on technique count or weight values.
+
+6. **Versioned Serialization**  
+   Save/load formats are versioned, backward compatible, and reject malformed payloads safely.
+
+---
+
+## **3. Testing Principles**
+1. **Correctness First**  
+   Tests must guarantee solver correctness, generator uniqueness, persistence round‑trips, and stats integrity.
+
+2. **Difficulty Grading Reliability**  
+   Boundary tests, known‑difficulty fixtures, and per‑technique minimal cases must remain stable across versions.
+
+3. **Variant Coverage**  
+   All supported variants (Standard, Jigsaw, Str8ts, Killer, 1–25, Codewords, KenKen, Kakuro) require scenario‑level validation.
+
+4. **Performance Guarantees**  
+   Tests enforce solver and generator latency budgets and deterministic seeds.
+
+5. **Regression Stability**  
+   Import/export fixtures must remain playable and solvable end‑to‑end.
+
+---
+
+## **4. User Experience Principles**
+1. **Consistent Grid Interaction**  
+   Selection, highlighting, pencil marks, and conflict indicators behave uniformly across all variants and themes.
+
+2. **Unified Controls**  
+   Keyboard/mouse input, undo/redo, hints, and pencil toggles behave identically across grid sizes and variants.
+
+3. **Accessible & Themed**  
+   Light/dark themes, adjustable font sizes, and non‑color‑only cues are mandatory.
+
+4. **Safe Persistence**  
+   Save/load/import/export flows must be discoverable, confirm outcomes, and never discard progress without explicit consent.
+
+5. **Clear Feedback**  
+   Conflicts, invalid moves, and hint usage must be visible without blocking navigation.
+
+---
+
+## **5. Performance Principles**
+1. **Interactive Responsiveness**  
+   Validation <200ms, solving <2s for 9×9, and graceful scaling for larger grids.
+
+2. **Non‑Blocking UI**  
+   Long operations run in background threads or show progress cues.
+
+3. **Efficient Persistence**  
+   Save/load/import/export complete within interactive latency (<300ms) and are atomic.
+
+4. **Memory Discipline**  
+   Large variants must avoid quadratic blowups in candidate tracking, history, and rendering.
+
+---
+
+## **6. Appendices (Normative)**
+The Constitution delegates operational detail to appendices, each governed by the C.L.E.A.R. lifecycle (see [`C.L.E.A.R. Lifecycle Table per Appendix.md`](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md)):
+
+- **[Appendix A — Code Quality Standards](speckit.constitution.appendix.a.md)**  
+  (detailed rules, interfaces, technique registry format)  
+  *Referenced by: §2 Code Quality Principles; [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) §2*
+
+- **[Appendix B — Testing Matrix & Fixtures](speckit.constitution.appendix.b.md)**  
+  (coverage tables, performance budgets, variant scenarios)  
+  *Referenced by: §3 Testing Principles; [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) §3*
+
+- **[Appendix C — UX Interaction Model](speckit.constitution.appendix.c.md)**  
+  (highlight rules, input model, accessibility requirements)  
+  *Referenced by: §4 User Experience Principles; [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) §4*
+
+- **[Appendix D — Performance Budgets & Benchmarks](speckit.constitution.appendix.d.md)**  
+  (latency targets, memory ceilings, profiling methodology)  
+  *Referenced by: §5 Performance Principles; [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) §5; [Appendix B](speckit.constitution.appendix.b.md) §B3*
+
+- **[Appendix E — Serialization Schema](speckit.constitution.appendix.e.md)**  
+  (versioning rules, migration paths, compatibility guarantees)  
+  *Referenced by: §2.6 Versioned Serialization; [`MIGRATIONS.md`](MIGRATIONS.md); [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) §6*
+---
+
+## **7. Governance Artifacts**
+The Constitution is supported by the following mandatory governance artifacts:
+
+1. **[C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md)** — defines how each appendix moves through Codify, Legitimize, Enforce, Adopt, and Review phases.  
+2. **[Release Checklist](RELEASE_CHECKLIST.md)** — a normative checklist that must be completed before any release; references all five appendices.  
+3. **[Migrations Register](MIGRATIONS.md)** — a versioned history of all serialization schema changes; governed by [Appendix E](speckit.constitution.appendix.e.md).  
+4. **[CI Enforcement Plan](CI%20Enforcement%20Plan.md)** — maps constitutional rules and appendix standards to automated CI checks.  
+5. **GOVERNANCE.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines the governance model and decision authority.  
+6. **MAINTAINERS.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines roles and responsibilities.
+
+These artifacts are normative.  
+No release may proceed unless:
+- All lifecycle steps for updated appendices are completed,  
+- The Release Checklist is fully satisfied, and  
+- All schema changes are recorded in the Migrations Register.
+
+---
+
+## **8. Governance Integration**
+The Constitution is supported by the following mandatory governance artifacts:
+
+- **GOVERNANCE.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines the governance model and decision authority  
+- **MAINTAINERS.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines roles and responsibilities  
+- **[C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md)** — defines how appendices evolve  
+- **[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)** — required for every release  
+- **[MIGRATIONS.md](MIGRATIONS.md)** — authoritative record of schema evolution  
+- **[CI Enforcement Plan](CI%20Enforcement%20Plan.md)** — maps constitutional rules to automated checks
+
+These artifacts are normative.  
+No change may be merged unless:
+1. It complies with the Constitution and appendices  
+2. It follows the C.L.E.A.R. lifecycle  
+3. It passes all CI enforcement checks  
+4. It updates governance artifacts when required  
+
+All contributors and maintainers are bound by these rules.
+
+---
+Each appendix is:
+- **Codified** as a standalone document,  
+- **Legitimized** via review,  
+- **Enforced** through CI and tooling,  
+- **Adopted** into releases, and  
+- **Reviewed** on a scheduled cadence.
+
+---
