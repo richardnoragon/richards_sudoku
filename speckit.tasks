@@ -1,5 +1,16 @@
 # speckit Tasks: richards_sudoku
 
+## Engineering Hardening (Current Priority)
+
+- [x] Add merge-blocking GitHub Actions workflow for markdown lint, Python lint/type checks, and tests.
+- [x] Enforce required test matrix across Windows, Linux, and macOS.
+- [x] Keep Python requirement on 3.13 and align CI runtime to Python 3.13.
+- [x] Track hardening status in `milestone_raodmap.md` and release evidence in `RELEASE_CHECKLIST.md`.
+- [ ] Configure branch protection rules to require all quality-gate checks before merge.
+- [x] Make markdown lint pass for all files under the current enforced policy.
+- [x] Make Python lint/type checks pass under the current enforced policy.
+- [ ] Capture evidence links for all release checklist checks before next release.
+
 ## Foundations (MVP-aligned)
 - [x] Initialize project structure: `src/` package with main entry, `tests/`, basic `pyproject`/pytest config.
 - [x] Implement core domain types: Cell, Board, Move, VariantMetadata, JSON schema version helper.

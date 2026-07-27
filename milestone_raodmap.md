@@ -1,5 +1,33 @@
 # Milestone Roadmap: richards_sudoku
 
+## 🛡️ Engineering Hardening (Current Priority)
+**Goal:** Enforce merge-blocking quality gates immediately and improve release confidence.
+
+- **Status Tracking (authoritative files)**
+  - [x] Hardening tracked in `speckit.tasks`
+  - [x] Release gate tracked in `RELEASE_CHECKLIST.md`
+  - [x] Hardening phase tracked in this roadmap
+
+- **Merge-Blocking CI Gates (required on every PR)**
+  - [x] Markdown lint (all markdown files)
+  - [x] Python lint and import-order checks
+  - [x] Python type checks
+  - [x] Full pytest suite, including UI tests
+  - [x] Test matrix on Windows, Linux, macOS
+
+- **Hardening Follow-ups**
+  - [ ] Remove or rewrite non-normative governance prose in policy docs
+  - [ ] Expand README with user-friendly onboarding + contributor quickstart
+  - [ ] Resolve remaining lint/type findings until CI is consistently green
+  - [ ] Document branch protection setup in repository settings
+
+- **Exit Criteria**
+  - [ ] All required CI checks are green on PRs and `main`
+  - [ ] Branch protection blocks merges when any required check fails
+  - [ ] RELEASE_CHECKLIST evidence links are attached before release
+
+---
+
 ## 🎯 MVP (Minimum Viable Product)
 **Goal:** Establish a working UI with basic gameplay.
 

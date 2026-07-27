@@ -37,6 +37,9 @@ It ensures every release respects the Constitution and all appendices.
 - [ ] UI smoke tests pass  
 - [ ] Performance tests meet [Appendix D](speckit.constitution.appendix.d.md) budgets  
 - [ ] No nondeterministic tests  
+- [ ] Required CI checks are green on all three OS targets (Windows/Linux/macOS)
+- [ ] Python lint/type checks are green (Ruff + mypy)
+- [ ] Markdown lint is green for all repository markdown files
 
 ---
 
@@ -80,5 +83,6 @@ It ensures every release respects the Constitution and all appendices.
 - [ ] UX Lead  
 - [ ] Performance Lead  
 - [ ] Persistence Lead  
+- [ ] Branch protection is configured to require all quality-gate checks before merge
 
 ---
