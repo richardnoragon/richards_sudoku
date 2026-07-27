@@ -83,13 +83,13 @@ It ensures every release respects the Constitution and all appendices.
 - [ ] UX Lead  
 - [ ] Performance Lead  
 - [ ] Persistence Lead  
-- [x] Branch protection is configured to require pull requests and protected-branch enforcement on `main`
+- [x] Branch ruleset is configured on `main` with required pull requests and required status checks
 
 ---
 
 ### **9. Hardening Evidence Links**
-- Branch protection rule: https://github.com/richardnoragon/richards_sudoku/settings/branch_protection_rules/80883823
-- Blocking verification PR (merge blocked while checks pending): https://github.com/richardnoragon/richards_sudoku/pull/1
+- Branch ruleset: https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804
+- Blocking verification PR (closed after validation): https://github.com/richardnoragon/richards_sudoku/pull/1
 - Quality Gates workflow run: https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560
 - Job links:
 	- Markdown Lint: https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831422

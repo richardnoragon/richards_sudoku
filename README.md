@@ -45,5 +45,5 @@ pytest -q
 ## Project Tracking
 
 - Todo/status source: `speckit.tasks`
-- Milestone/status overview: `milestone_raodmap.md`
+- Milestone/status overview: `milestone_roadmap.md`
 - Release gate: `RELEASE_CHECKLIST.md`

@@ -27,7 +27,7 @@
   - [x] RELEASE_CHECKLIST evidence links are attached before release
 
 **Evidence:**
-- Branch protection rule: <https://github.com/richardnoragon/richards_sudoku/settings/branch_protection_rules/80883823>
+- Branch ruleset: <https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804>
 - Workflow run reference: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>
 - Enforcement probe: direct push to `main` rejected (`GH006`, pull-request-required).
 
