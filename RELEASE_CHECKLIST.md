@@ -89,6 +89,7 @@ It ensures every release respects the Constitution and all appendices.
 
 ### **9. Hardening Evidence Links**
 - Branch protection rule: https://github.com/richardnoragon/richards_sudoku/settings/branch_protection_rules/80883823
+- Blocking verification PR (merge blocked while checks pending): https://github.com/richardnoragon/richards_sudoku/pull/1
 - Quality Gates workflow run: https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560
 - Job links:
 	- Markdown Lint: https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831422
