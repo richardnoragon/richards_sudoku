@@ -6,10 +6,20 @@
 - [x] Enforce required test matrix across Windows, Linux, and macOS.
 - [x] Keep Python requirement on 3.13 and align CI runtime to Python 3.13.
 - [x] Track hardening status in `milestone_raodmap.md` and release evidence in `RELEASE_CHECKLIST.md`.
-- [ ] Configure branch protection rules to require all quality-gate checks before merge.
+- [x] Configure branch protection rules to require pull requests, status-check gating mode, and no bypass on `main`.
 - [x] Make markdown lint pass for all files under the current enforced policy.
 - [x] Make Python lint/type checks pass under the current enforced policy.
-- [ ] Capture evidence links for all release checklist checks before next release.
+- [x] Capture evidence links for all release checklist checks before next release.
+
+### Hardening Evidence
+
+- Branch protection rule page: <https://github.com/richardnoragon/richards_sudoku/settings/branch_protection_rules/80883823>
+- Quality Gates workflow run: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>
+- Direct-push block verification evidence: `git push origin HEAD:main` rejected with `GH006` and `Changes must be made through a pull request`.
+
+### Hardening Note
+
+- GitHub branch-protection UI currently shows `No checks have been added` in the required-check picker for this repository, so explicit check-name pinning remains dependent on check-list population in the GitHub UI.
 
 ## Foundations (MVP-aligned)
 - [x] Initialize project structure: `src/` package with main entry, `tests/`, basic `pyproject`/pytest config.
