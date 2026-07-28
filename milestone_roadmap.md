@@ -16,15 +16,20 @@
   - [x] Test matrix on Windows, Linux, macOS
 
 - **Hardening Follow-ups**
-  - [ ] Remove or rewrite non-normative governance prose in policy docs
-  - [ ] Expand README with user-friendly onboarding + contributor quickstart
-  - [ ] Resolve remaining lint/type findings until CI is consistently green
-  - [ ] Document branch protection setup in repository settings
+  - [x] Remove or rewrite non-normative governance prose in policy docs
+  - [x] Expand README with user-friendly onboarding + contributor quickstart
+  - [x] Resolve remaining lint/type findings until CI is consistently green
+  - [x] Document branch protection setup in repository settings
 
 - **Exit Criteria**
-  - [ ] All required CI checks are green on PRs and `main`
-  - [ ] Branch protection blocks merges when any required check fails
-  - [ ] RELEASE_CHECKLIST evidence links are attached before release
+  - [x] All required CI checks are green on PRs and `main`
+  - [x] Branch protection blocks merges when any required check fails
+  - [x] RELEASE_CHECKLIST evidence links are attached before release
+
+**Evidence:**
+- Branch ruleset: <https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804>
+- Workflow run reference: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>
+- Enforcement probe: direct push to `main` rejected (`GH006`, pull-request-required).
 
 ---
 

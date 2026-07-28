@@ -5,11 +5,21 @@
 - [x] Add merge-blocking GitHub Actions workflow for markdown lint, Python lint/type checks, and tests.
 - [x] Enforce required test matrix across Windows, Linux, and macOS.
 - [x] Keep Python requirement on 3.13 and align CI runtime to Python 3.13.
-- [x] Track hardening status in `milestone_raodmap.md` and release evidence in `RELEASE_CHECKLIST.md`.
-- [ ] Configure branch protection rules to require all quality-gate checks before merge.
+- [x] Track hardening status in `milestone_roadmap.md` and release evidence in `RELEASE_CHECKLIST.md`.
+- [x] Configure a branch ruleset on `main` with required pull requests and required status checks.
 - [x] Make markdown lint pass for all files under the current enforced policy.
 - [x] Make Python lint/type checks pass under the current enforced policy.
-- [ ] Capture evidence links for all release checklist checks before next release.
+- [x] Capture evidence links for all release checklist checks before next release.
+
+### Hardening Evidence
+
+- Branch ruleset page: <https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804>
+- Quality Gates workflow run: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>
+- Direct-push block verification evidence: `git push origin HEAD:main` rejected with `GH006` and `Changes must be made through a pull request`.
+
+### Hardening Note
+
+- Ruleset required checks are explicitly pinned to the five `Quality Gates` jobs across markdown, lint/type, and test matrix jobs.
 
 ## Foundations (MVP-aligned)
 - [x] Initialize project structure: `src/` package with main entry, `tests/`, basic `pyproject`/pytest config.

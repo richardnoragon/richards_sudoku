@@ -83,6 +83,20 @@ It ensures every release respects the Constitution and all appendices.
 - [ ] UX Lead  
 - [ ] Performance Lead  
 - [ ] Persistence Lead  
-- [ ] Branch protection is configured to require all quality-gate checks before merge
+- [x] Branch ruleset is configured on `main` with required pull requests and required status checks
+
+---
+
+### **9. Hardening Evidence Links**
+- Branch ruleset: <https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804>
+- Blocking verification PR (closed after validation): <https://github.com/richardnoragon/richards_sudoku/pull/1>
+- Quality Gates workflow run: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>
+- Job links:
+  - Markdown Lint: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831422>
+  - Python Lint and Type: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831411>
+  - Tests (ubuntu-latest): <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831410>
+  - Tests (windows-latest): <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831429>
+  - Tests (macos-latest): <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560/job/90079831463>
+- Blocking verification: direct push attempt to `main` rejected by protected-branch hook (`GH006`, `Changes must be made through a pull request`).
 
 ---
