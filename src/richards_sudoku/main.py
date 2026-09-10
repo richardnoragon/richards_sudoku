@@ -38,12 +38,14 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Richards Sudoku")
         self.resize(700, 760)
+        self.setAccessibleName("Richards Sudoku main window")
 
         self._dark_mode = False
 
         # --- Central widget: scrollable grid (K3) ---
         from PyQt6.QtWidgets import QScrollArea
         self._grid = SudokuGridWidget()
+        self._grid.setAccessibleName("Sudoku board")
         scroll = QScrollArea()
         scroll.setWidget(self._grid)
         scroll.setWidgetResizable(True)
@@ -100,6 +102,14 @@ class MainWindow(QMainWindow):
 
         self._update_action_states()
 
+    def _refresh_board_context(self, message: str | None = None) -> None:
+        """Reset shell labels after a new board is bound or restarted."""
+        self._lbl_cell.clear()
+        self._refresh_timer_label()
+        self._update_action_states()
+        if message is not None:
+            self.statusBar().showMessage(message, 3000)
+
     # ------------------------------------------------------------------
     # Action construction
     # ------------------------------------------------------------------
@@ -149,6 +159,9 @@ class MainWindow(QMainWindow):
         act = QAction(label, self)
         if shortcut:
             act.setShortcut(QKeySequence(shortcut))
+        act.setToolTip(tip)
+        act.setStatusTip(tip)
+        act.setWhatsThis(tip)
         act.setStatusTip(tip)
         return act
 
@@ -220,6 +233,7 @@ class MainWindow(QMainWindow):
 
         self._lbl_mode = QLabel("Mode: Normal")
         self._lbl_mode.setFont(make_font(9))
+        self._lbl_mode.setAccessibleName("Current input mode")
         sb.addWidget(self._lbl_mode)
 
         # Hint mode radio buttons
@@ -247,15 +261,23 @@ class MainWindow(QMainWindow):
 
         self._lbl_timer = QLabel("00:00")
         self._lbl_timer.setFont(make_font(9))
+        self._lbl_timer.setAccessibleName("Elapsed game time")
         sb.addPermanentWidget(self._lbl_timer)
 
         self._lbl_difficulty = QLabel("SE: ---")
         self._lbl_difficulty.setFont(make_font(9))
+        self._lbl_difficulty.setAccessibleName("Puzzle difficulty rating")
         sb.addPermanentWidget(self._lbl_difficulty)
 
         self._lbl_cell = QLabel("")
         self._lbl_cell.setFont(make_font(9))
+        self._lbl_cell.setAccessibleName("Selected cell")
         sb.addPermanentWidget(self._lbl_cell)
+
+        self.statusBar().showMessage(
+            "Keyboard: arrows move, digits enter, Delete clears, P toggles pencil.",
+            0,
+        )
 
     # ------------------------------------------------------------------
     # Slots
@@ -264,6 +286,11 @@ class MainWindow(QMainWindow):
     def _on_pencil_mode_toggled(self, checked: bool) -> None:
         self._grid.set_pencil_mode(checked)
         self._lbl_mode.setText("Mode: Pencil" if checked else "Mode: Normal")
+        self.statusBar().showMessage(
+            "Pencil mode on — type a digit to add or remove a candidate." if checked
+            else "Pencil mode off — digits enter values directly.",
+            3000,
+        )
 
     def _on_dark_mode_toggled(self, checked: bool) -> None:
         self._dark_mode = checked
@@ -271,7 +298,11 @@ class MainWindow(QMainWindow):
         apply_palette(QApplication.instance(), DARK if checked else LIGHT)  # type: ignore[arg-type]
 
     def _on_cell_selected(self, row: int, col: int) -> None:
-        self._lbl_cell.setText(f"R{row + 1}C{col + 1}")
+        self._lbl_cell.setText(f"Selected: R{row + 1}C{col + 1}")
+        self.statusBar().showMessage(
+            f"Selected R{row + 1}C{col + 1}. Use arrows or Tab to navigate.",
+            2000,
+        )
 
     def _on_edit_made(self, *_args) -> None:
         """Called after any value or pencil-mark change; refresh action states."""
@@ -293,9 +324,8 @@ class MainWindow(QMainWindow):
         )
         self._clock.start()
         self._refresh_difficulty_label()
-        self._update_action_states()
+        self._refresh_board_context("New game started.")
         self._refresh_codebook_panel(meta)
-        self.statusBar().showMessage("New game started.", 3000)
 
     def _on_undo(self) -> None:
         if self._ctrl.undo():
@@ -322,9 +352,8 @@ class MainWindow(QMainWindow):
             return
         self._clock.start()
         self._refresh_difficulty_label()
-        self._update_action_states()
+        self._refresh_board_context(f"Loaded: {path}")
         self._refresh_codebook_panel(self._ctrl.variant_meta)
-        self.statusBar().showMessage(f"Loaded: {path}", 3000)
 
     def _on_save(self) -> None:
         if self._ctrl.save_path is not None:
@@ -368,7 +397,7 @@ class MainWindow(QMainWindow):
         elif choice == GameCompleteDialog.Result.RESTART:
             self._ctrl.restart_game()
             self._clock.start()
-            self._update_action_states()
+            self._refresh_board_context("Game restarted.")
 
     def _refresh_timer_label(self) -> None:
         elapsed = int(self._ctrl.elapsed_seconds)

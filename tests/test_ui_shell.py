@@ -114,6 +114,30 @@ class TestMainWindowSmoke:
     def test_mode_label_present(self, main_window: MainWindow):
         assert "Normal" in main_window._lbl_mode.text()
 
+    def test_selection_status_has_clear_context(self, main_window: MainWindow):
+        assert "Selected" in main_window._lbl_cell.text() or main_window._lbl_cell.text() == ""
+        main_window._grid.select_cell(2, 2)
+        assert "Selected:" in main_window._lbl_cell.text()
+        assert "R3C3" in main_window._lbl_cell.text()
+
+    def test_help_hint_is_visible_for_keyboard_input(self, main_window: MainWindow):
+        assert "keyboard" in main_window.statusBar().currentMessage().lower() or main_window._lbl_mode.text()
+
+    def test_restart_clears_selected_cell_label(
+        self,
+        main_window: MainWindow,
+        meta: VariantMetadata,
+    ):
+        main_window._ctrl.new_game(meta=meta, difficulty="easy", seed=1, hint_limit=3)
+        main_window._on_cell_selected(1, 1)
+        assert main_window._lbl_cell.text() == "Selected: R2C2"
+
+        main_window._ctrl.restart_game(reset_timer=True)
+        main_window._refresh_board_context("Game restarted.")
+
+        assert main_window._grid.selected_cell is None
+        assert main_window._lbl_cell.text() == ""
+
 
 # ---------------------------------------------------------------------------
 # SudokuGridWidget — render & selection

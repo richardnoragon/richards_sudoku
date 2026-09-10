@@ -38,6 +38,7 @@ Killer
 """
 from __future__ import annotations
 
+import copy
 from collections import defaultdict
 from itertools import combinations, permutations
 from typing import Sequence
@@ -1172,6 +1173,270 @@ class _HiddenQuad:
         return False
 
 
+def _clone_grid(grid: _WorkingGrid) -> _WorkingGrid:
+    """Return a deep clone of *grid* for what-if simulation techniques."""
+    clone = object.__new__(_WorkingGrid)
+    for attr in _WorkingGrid.__slots__:
+        value = getattr(grid, attr)
+        if attr == "values":
+            setattr(clone, attr, [row[:] for row in value])
+        elif attr == "candidates":
+            setattr(clone, attr, [[set(cell) for cell in row] for row in value])
+        elif attr in {"row_units", "col_units", "region_units", "units"}:
+            setattr(clone, attr, [list(unit) for unit in value])
+        elif attr == "cell_to_region":
+            setattr(clone, attr, {cell: list(region) for cell, region in value.items()})
+        elif attr == "constraints":
+            setattr(clone, attr, copy.deepcopy(value))
+        elif attr == "peers":
+            setattr(clone, attr, dict(value))
+        elif attr == "black_cells":
+            setattr(clone, attr, frozenset(value))
+        else:
+            setattr(clone, attr, value)
+    return clone
+
+
+def _run_basic_simplifications(grid: _WorkingGrid) -> bool:
+    """Apply the existing non-advanced techniques until one makes progress."""
+    for tech in _BASE_TECHNIQUES_FOR_CHAIN:
+        if tech.apply(grid):
+            return True
+    return False
+
+
+def _simplify_to_fixpoint(grid: _WorkingGrid) -> bool:
+    """Keep applying basic techniques until no further progress is possible."""
+    progress = False
+    while True:
+        if _has_empty_candidates(grid):
+            return progress
+        if not _run_basic_simplifications(grid):
+            return progress
+        progress = True
+
+
+class _UniqueRectangle:
+    name = "Unique Rectangle"
+    weight = 6.2
+
+    def apply(self, grid: _WorkingGrid) -> bool:
+        if grid.size < 4:
+            return False
+        changed = False
+        rows = range(grid.size)
+        cols = range(grid.size)
+        for r1, r2 in combinations(rows, 2):
+            for c1, c2 in combinations(cols, 2):
+                cells = [(r1, c1), (r1, c2), (r2, c1), (r2, c2)]
+                candidate_sets = [grid.candidates[r][c] for r, c in cells]
+                common = set.intersection(*map(set, candidate_sets))
+                if len(common) != 2:
+                    continue
+                exact = [cell for cell in cells if grid.candidates[cell[0]][cell[1]] == common]
+                if len(exact) != 3:
+                    continue
+                odd = next(cell for cell in cells if cell not in exact)
+                r, c = odd
+                if len(grid.candidates[r][c]) > 2 and common.issubset(grid.candidates[r][c]):
+                    grid.candidates[r][c] = set(common)
+                    changed = True
+                    return True
+        return changed
+
+
+class _BUG:
+    name = "BUG"
+    weight = 6.5
+
+    def apply(self, grid: _WorkingGrid) -> bool:
+        unsolved = [
+            (r, c)
+            for r in range(grid.size)
+            for c in range(grid.size)
+            if grid.values[r][c] is None and len(grid.candidates[r][c]) >= 2
+        ]
+        trivalue = [(r, c) for r, c in unsolved if len(grid.candidates[r][c]) == 3]
+        if len(trivalue) != 1:
+            return False
+        if any(len(grid.candidates[r][c]) not in (2, 3) for r, c in unsolved):
+            return False
+
+        target = trivalue[0]
+        counts: dict[int, int] = defaultdict(int)
+        for r, c in unsolved:
+            for val in grid.candidates[r][c]:
+                counts[val] += 1
+
+        odd_vals = [val for val in grid.candidates[target[0]][target[1]] if counts[val] % 2 == 1]
+        if len(odd_vals) != 1:
+            return False
+
+        grid.set_value(target[0], target[1], odd_vals[0])
+        return True
+
+
+class _AlignedPairExclusion:
+    name = "Aligned Pair Exclusion"
+    weight = 6.8
+
+    def apply(self, grid: _WorkingGrid) -> bool:
+        changed = False
+        for region in grid.region_units:
+            pair_cells = [
+                (r, c)
+                for r, c in region
+                if grid.values[r][c] is None and len(grid.candidates[r][c]) == 2
+            ]
+            for a, b in combinations(pair_cells, 2):
+                cand_a = grid.candidates[a[0]][a[1]]
+                cand_b = grid.candidates[b[0]][b[1]]
+                if cand_a != cand_b:
+                    continue
+                if a[0] == b[0]:
+                    row = a[0]
+                    pair = frozenset(cand_a)
+                    for c in range(grid.size):
+                        if (row, c) in region:
+                            continue
+                        if grid.values[row][c] is None and pair & grid.candidates[row][c]:
+                            before = set(grid.candidates[row][c])
+                            grid.candidates[row][c] -= pair
+                            if grid.candidates[row][c] != before:
+                                changed = True
+                                return True
+                elif a[1] == b[1]:
+                    col = a[1]
+                    pair = frozenset(cand_a)
+                    for r in range(grid.size):
+                        if (r, col) in region:
+                            continue
+                        if grid.values[r][col] is None and pair & grid.candidates[r][col]:
+                            before = set(grid.candidates[r][col])
+                            grid.candidates[r][col] -= pair
+                            if grid.candidates[r][col] != before:
+                                changed = True
+                                return True
+        return changed
+
+
+class _XYWing:
+    name = "XY-Wing"
+    weight = 5.6
+
+    def apply(self, grid: _WorkingGrid) -> bool:
+        for pivot_r in range(grid.size):
+            for pivot_c in range(grid.size):
+                pivot = (pivot_r, pivot_c)
+                pivot_cands = grid.candidates[pivot_r][pivot_c]
+                if grid.values[pivot_r][pivot_c] is not None or len(pivot_cands) != 2:
+                    continue
+                x, y = tuple(pivot_cands)
+                peer_cells = [
+                    cell for cell in grid.peers[pivot]
+                    if grid.values[cell[0]][cell[1]] is None and len(grid.candidates[cell[0]][cell[1]]) == 2
+                ]
+                for wing1 in peer_cells:
+                    c1 = grid.candidates[wing1[0]][wing1[1]]
+                    if x not in c1 or y in c1:
+                        continue
+                    z = next(iter(c1 - {x}))
+                    for wing2 in peer_cells:
+                        if wing2 == wing1:
+                            continue
+                        c2 = grid.candidates[wing2[0]][wing2[1]]
+                        if y not in c2 or z not in c2 or x in c2:
+                            continue
+                        targets = (
+                            grid.peers[wing1]
+                            & grid.peers[wing2]
+                        ) - {pivot, wing1, wing2}
+                        removed = False
+                        for tr, tc in targets:
+                            if grid.values[tr][tc] is None and z in grid.candidates[tr][tc]:
+                                grid.candidates[tr][tc].discard(z)
+                                removed = True
+                        if removed:
+                            return True
+        return False
+
+
+class _XYZWing:
+    name = "XYZ-Wing"
+    weight = 5.8
+
+    def apply(self, grid: _WorkingGrid) -> bool:
+        for pivot_r in range(grid.size):
+            for pivot_c in range(grid.size):
+                pivot = (pivot_r, pivot_c)
+                pivot_cands = grid.candidates[pivot_r][pivot_c]
+                if grid.values[pivot_r][pivot_c] is not None or len(pivot_cands) != 3:
+                    continue
+                peer_cells = [
+                    cell for cell in grid.peers[pivot]
+                    if grid.values[cell[0]][cell[1]] is None and len(grid.candidates[cell[0]][cell[1]]) == 2
+                ]
+                for z in pivot_cands:
+                    xy = pivot_cands - {z}
+                    if len(xy) != 2:
+                        continue
+                    x, y = tuple(xy)
+                    for wing1 in peer_cells:
+                        c1 = grid.candidates[wing1[0]][wing1[1]]
+                        if c1 != frozenset({x, z}):
+                            continue
+                        for wing2 in peer_cells:
+                            if wing2 == wing1:
+                                continue
+                            c2 = grid.candidates[wing2[0]][wing2[1]]
+                            if c2 != frozenset({y, z}):
+                                continue
+                            common = (grid.peers[wing1] & grid.peers[wing2]) - {pivot, wing1, wing2}
+                            removed = False
+                            for tr, tc in common:
+                                if grid.values[tr][tc] is None and z in grid.candidates[tr][tc]:
+                                    grid.candidates[tr][tc].discard(z)
+                                    removed = True
+                            if removed:
+                                return True
+        return False
+
+
+class _ForcingChain:
+    name = "Forcing Chain"
+    weight = 7.2
+
+    def apply(self, grid: _WorkingGrid) -> bool:
+        for r in range(grid.size):
+            for c in range(grid.size):
+                if grid.values[r][c] is not None:
+                    continue
+                if len(grid.candidates[r][c]) < 2 or len(grid.candidates[r][c]) > 3:
+                    continue
+                survivors: set[int] = set()
+                original = set(grid.candidates[r][c])
+                for val in original:
+                    trial = _clone_grid(grid)
+                    trial.set_value(r, c, val)
+                    if not _is_seeding_valid(trial):
+                        continue
+                    _simplify_to_fixpoint(trial)
+                    if _has_empty_candidates(trial) or not _is_seeding_valid(trial):
+                        continue
+                    survivors.add(val)
+                if not survivors:
+                    continue
+                if survivors != original:
+                    grid.candidates[r][c] &= survivors
+                    if len(grid.candidates[r][c]) == 1:
+                        grid.set_value(r, c, next(iter(grid.candidates[r][c])))
+                    return True
+                if len(survivors) == 1:
+                    grid.set_value(r, c, next(iter(survivors)))
+                    return True
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Technique registry (ascending weight)
 # ---------------------------------------------------------------------------
@@ -1197,7 +1462,34 @@ _TECHNIQUES: list = [
     _NakedQuad(),
     _Jellyfish(),
     _HiddenQuad(),
+    _XYWing(),
+    _XYZWing(),
+    _UniqueRectangle(),
+    _BUG(),
+    _AlignedPairExclusion(),
+    _ForcingChain(),
 ]
+
+_ADVANCED_TECHNIQUES: tuple[type, ...] = (
+    _Jellyfish,
+    _HiddenQuad,
+    _XYWing,
+    _XYZWing,
+    _UniqueRectangle,
+    _BUG,
+    _AlignedPairExclusion,
+    _ForcingChain,
+)
+
+
+_BASE_TECHNIQUES_FOR_CHAIN: list = list(_TECHNIQUES[:-6])
+
+
+def _techniques_for_grid(grid: _WorkingGrid) -> list:
+    """Apply the full pattern set only on 9×9 boards; larger boards use the faster base set."""
+    if grid.size == 9:
+        return list(_TECHNIQUES)
+    return [tech for tech in _TECHNIQUES if not isinstance(tech, _ADVANCED_TECHNIQUES)]
 
 
 # ---------------------------------------------------------------------------
@@ -1236,10 +1528,11 @@ def grade(board: Board, meta: VariantMetadata) -> tuple[float, str]:
 
     total_weight = 0.0
     step_count = 0
+    techniques = _techniques_for_grid(grid)
 
     while not grid.is_solved():
         progress = False
-        for tech in _TECHNIQUES:
+        for tech in techniques:
             if tech.apply(grid):
                 total_weight += tech.weight
                 step_count += 1

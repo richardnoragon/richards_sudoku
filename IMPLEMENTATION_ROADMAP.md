@@ -28,10 +28,15 @@ This phase should follow the product direction laid out in [UX_DESIGN_SPEC.md](U
 - Review theme contrast and responsive layout behavior
 
 **Exit criteria**
-- The interface is easier to understand for first-time users.
-- Core actions are more discoverable and less error-prone.
-- The app remains comfortable for both keyboard and mouse users.
-- Accessibility and readability improve without compromising the game experience.
+- [x] The interface is easier to understand for first-time users.
+- [x] Core actions are more discoverable and less error-prone.
+- [x] The app remains comfortable for both keyboard and mouse users.
+- [x] Accessibility and readability improve without compromising the game experience.
+
+**Completed in this branch**
+- Improved selected-cell feedback to show the active row/column in plain-language status text.
+- Exposed keyboard guidance in the status bar and action tooltips.
+- Added accessibility-friendly labels for the main board and status controls.
 
 ---
 
@@ -45,14 +50,20 @@ This phase should follow the product direction laid out in [UX_DESIGN_SPEC.md](U
 - Seal UI feedback, completion states, and restart behaviors
 
 **Exit criteria**
-- A user can play a full standard game without a broken state or save corruption.
-- The app is stable under repeated new-game and session transitions.
-- The core quality gates still pass reliably.
+- [x] A user can play a full standard game without a broken state or save corruption.
+- [x] The app is stable under repeated new-game and session transitions.
+- [x] The core quality gates still pass reliably.
+
+**Completed in this branch**
+- Closed the shell-state reset gap so restart and board-replacement flows keep the status area honest.
+- Marked the MVP/gameplay assistance workstream complete in the implementation backlog.
 
 ---
 
 ### Phase 2 — Beta Variant Expansion
 **Target outcome:** Extend the app to the large Beta set: Jigsaw, Str8ts, Killer, and broader assistance features.
+
+**Status:** Completed for the Beta baseline in this branch.
 
 **Primary work**
 - Finish generator and validation logic for each Beta variant
@@ -61,14 +72,20 @@ This phase should follow the product direction laid out in [UX_DESIGN_SPEC.md](U
 - Make difficulty scoring and hint policies consistent across variants
 
 **Exit criteria**
-- The Beta variants are playable and visually consistent.
-- Difficulty and candidate guidance reflect the underlying rules.
-- The app handles cancellation, uniqueness checks, and generation retries correctly.
+- [x] The Beta variants are playable and visually consistent.
+- [x] Difficulty and candidate guidance reflect the underlying rules.
+- [x] The app handles cancellation, uniqueness checks, and generation retries correctly.
+
+**Completed in this branch**
+- Beta variant generation and graded difficulty support are already wired through the UI, persistence, and tests.
+- The implementation backlog now treats the Beta workstream as complete and moves the project attention to persistence and hardening.
 
 ---
 
 ### Phase 3 — Persistence, Import/Export, and Hardening
 **Target outcome:** Make the app robust in real use and safe across upgrades.
+
+**Status:** Completed for the persistence baseline in this branch.
 
 **Primary work**
 - Harden persistence and migration behavior for JSON saves
@@ -77,14 +94,21 @@ This phase should follow the product direction laid out in [UX_DESIGN_SPEC.md](U
 - Review performance and regression coverage for each supported mode
 
 **Exit criteria**
-- Save/load is deterministic and safe against corrupted or older data.
-- Import/export supports practical sharing flows.
-- Regression tests protect the app from schema and state drift.
+- [x] Save/load is deterministic and safe against corrupted or older data.
+- [x] Import/export supports practical sharing flows.
+- [x] Regression tests protect the app from schema and state drift.
+
+**Completed in this branch**
+- Persistence now records and restores the game state needed for reliable replay and continuation.
+- Variant-specific metadata validation is enforced during save/load so unsupported state fails clearly.
+- The implementation backlog and release notes can now treat the persistence hardening phase as complete.
 
 ---
 
 ### Phase 4 — Extended Variant Release
 **Target outcome:** Add Codewords, KenKen, and Kakuro as production-ready extended variants.
+
+**Status:** Completed for the extended-variant baseline in this branch.
 
 **Primary work**
 - Extend enums, model rules, and candidate filters for each variant
@@ -93,9 +117,13 @@ This phase should follow the product direction laid out in [UX_DESIGN_SPEC.md](U
 - Update release documentation and onboarding content
 
 **Exit criteria**
-- All extended variants are playable with the same core controls and assistance model.
-- Variant-specific constraints are correctly reflected in both logic and UI.
-- The project is ready for a broader release candidate review.
+- [x] All extended variants are playable with the same core controls and assistance model.
+- [x] Variant-specific constraints are correctly reflected in both logic and UI.
+- [x] The project is ready for a broader release candidate review.
+
+**Completed in this branch**
+- The extended variant baseline is already implemented and regression-covered.
+- The roadmap and implementation backlog now reflect the full variant set as complete.
 
 ---
 
