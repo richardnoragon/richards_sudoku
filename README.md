@@ -26,6 +26,20 @@ python -m pip install -e .[dev]
 richards-sudoku
 ```
 
+## Planned UX Improvements
+
+The project should continue improving the player experience with these priorities:
+
+- Improve visual feedback for selection, conflicts, and variant rules.
+- Raise accessibility through better contrast, font scaling, and keyboard-first navigation.
+- Reduce onboarding friction with brief in-app guidance and clearer status messages.
+- Standardize dialogs, menus, and controls to make the interface more predictable.
+- Add lightweight tutorials and contextual help for advanced variants without overwhelming new users.
+
+## Design Direction
+
+See [UX_DESIGN_SPEC.md](UX_DESIGN_SPEC.md) for the current product-facing design direction, user journeys, information architecture, accessibility requirements, and success criteria.
+
 ## Run Tests
 
 ```bash

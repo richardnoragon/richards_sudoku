@@ -33,6 +33,36 @@
 
 ---
 
+## 🧭 UX / Accessibility Improvements (Cross-cutting)
+**Goal:** Improve usability, reduce friction, and make the app more approachable for both casual and advanced users.
+
+- **Interaction clarity**
+  - Add clear visible affordances for selected cells, conflicts, candidate modes, and variant-specific constraints.
+  - Improve keyboard focus management and ensure all controls remain usable without a mouse.
+  - Standardize button labels, status text, and help hints to reduce cognitive load.
+
+- **Accessibility**
+  - Increase contrast in light/dark themes and ensure text remains legible at smaller sizes.
+  - Add larger controls and configurable font scaling for readability.
+  - Support high-contrast and reduced-motion options where appropriate.
+
+- **Learning flow**
+  - Add a lightweight onboarding/tutorial overlay for first-time users.
+  - Show contextual hints for variant rules and keyboard shortcuts.
+  - Surface rule explanations in the new game dialog and status bar.
+
+- **Feedback & trust**
+  - Display clearer success/error messages for generation failures, invalid imports, and save/load issues.
+  - Provide non-blocking toasts or inline status messages instead of silent failures.
+  - Confirm destructive actions such as restart or overwrite with clear prompts.
+
+- **Responsive polish**
+  - Improve spacing, alignment, and consistency of dialogs, menus, and toolbar buttons.
+  - Optimize the layout for different window sizes without crowding the board or controls.
+  - Keep the most important actions visible without excessive menu depth.
+
+---
+
 ## 🎯 MVP (Minimum Viable Product)
 **Goal:** Establish a working UI with basic gameplay.
 
