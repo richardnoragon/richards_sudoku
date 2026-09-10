@@ -30,6 +30,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+qt_api = "pyqt6"
+markers = [
+    "qt: Qt UI tests",
+    "slow: slow-running tests",
+]
 
 [tool.ruff]
 target-version = "py313"

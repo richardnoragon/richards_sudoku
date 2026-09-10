@@ -33,6 +33,44 @@
 
 ---
 
+## 🧭 UX / Accessibility Improvements (Cross-cutting)
+**Goal:** Improve usability, reduce friction, and make the app more approachable for both casual and advanced users.
+
+- **Status:** Completed for Phase 0
+
+- **Phase 0 results**
+  - Selected-cell labels now communicate the active board location more clearly.
+  - Keyboard guidance is surfaced in the status bar for navigation and entry actions.
+  - Accessible labels/tooltips are in place for the main controls and board state.
+  - The UI is aligned with the product direction in `UX_DESIGN_SPEC.md`.
+
+- **Interaction clarity**
+  - Add clear visible affordances for selected cells, conflicts, candidate modes, and variant-specific constraints.
+  - Improve keyboard focus management and ensure all controls remain usable without a mouse.
+  - Standardize button labels, status text, and help hints to reduce cognitive load.
+
+- **Accessibility**
+  - Increase contrast in light/dark themes and ensure text remains legible at smaller sizes.
+  - Add larger controls and configurable font scaling for readability.
+  - Support high-contrast and reduced-motion options where appropriate.
+
+- **Learning flow**
+  - Add a lightweight onboarding/tutorial overlay for first-time users.
+  - Show contextual hints for variant rules and keyboard shortcuts.
+  - Surface rule explanations in the new game dialog and status bar.
+
+- **Feedback & trust**
+  - Display clearer success/error messages for generation failures, invalid imports, and save/load issues.
+  - Provide non-blocking toasts or inline status messages instead of silent failures.
+  - Confirm destructive actions such as restart or overwrite with clear prompts.
+
+- **Responsive polish**
+  - Improve spacing, alignment, and consistency of dialogs, menus, and toolbar buttons.
+  - Optimize the layout for different window sizes without crowding the board or controls.
+  - Keep the most important actions visible without excessive menu depth.
+
+---
+
 ## 🎯 MVP (Minimum Viable Product)
 **Goal:** Establish a working UI with basic gameplay.
 
@@ -62,6 +100,8 @@
 ## 🚀 Beta Release
 **Goal:** Expand functionality and introduce multiple variants + advanced assistance.
 
+**Status:** Completed for the Beta baseline in this branch.
+
 - **Variants**
   - Add Jigsaw Sudoku.
   - Add Str8ts.
@@ -70,7 +110,8 @@
   - Architecture supports future variants.
 
 - **Difficulty & Grading**
-  - SE difficulty rating engine (`difficulty_se.py`): 17 techniques, weighted‑average score, Easy/Medium/Hard/Extreme labels.
+  - SE difficulty rating engine (`difficulty_se.py`): 23 techniques, weighted‑average score, Easy/Medium/Hard/Extreme labels.
+  - Advanced pattern coverage includes XY‑Wing, XYZ‑Wing, Unique Rectangle, BUG, Aligned Pair Exclusion, and Forcing Chains.
   - SE score displayed in status bar on new game and load.
   - SE score/label persisted in save JSON (schema v2) and restored on load without recomputing.
 
@@ -93,10 +134,34 @@
   - Assistance features work consistently across variants.
   - Import/export allows puzzle sharing.
 
+**Completed in this branch**
+- Jigsaw, Str8ts, and Killer variant generation paths are already in place.
+- SE grading and variant-aware candidate evaluation are wired through the app and tests.
+- The Beta baseline is now reflected as complete in the implementation backlog and project README.
+
+---
+
+## 💾 Persistence / Import-Export Hardening
+**Goal:** Make save/load and variant state restoration safe across upgrades.
+
+- **Status:** Completed for the persistence baseline
+
+- **Completed work**
+  - Versioned save files preserve board state, metadata, timer state, stats, SE data, and hint policy.
+  - Variant-specific metadata validation is enforced for all supported save/load paths.
+  - Regression coverage exists for round-trips, invalid saves, and variant constraint validation.
+
+- **Acceptance Criteria**
+  - Save/load is deterministic and safe against corrupted or older data.
+  - Import/export supports practical sharing flows.
+  - Regression tests protect the app from schema and state drift.
+
 ---
 
 ## ⚙️ Extended Variants
 **Goal:** Enable the four variants that were present but greyed out in Beta.
+
+**Status:** Completed for the extended-variant baseline.
 
 - **1–25 Sudoku**
   - 25×25 grid with 5×5 box regions; symbols 1–25.
@@ -125,6 +190,11 @@
   - Background workers with spinner and cancel for each variant.
   - SE grading, persistence, import/export working for all four variants.
   - Existing Beta variants unaffected.
+
+**Completed in this branch**
+- Codewords, KenKen, and Kakuro are wired through the model, generator, solver, UI, and persistence layers.
+- The associated regression tests cover the extended-variant behaviors and import/export round-trips.
+- The roadmap now reflects the extended-variant baseline as complete rather than pending.
 
 ---
 

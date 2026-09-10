@@ -78,14 +78,14 @@
 - [x] Performance test: `grade()` on a 9x9 puzzle completes in < 100ms.
 - [x] Performance test: Killer cage permutation on a cage of 5+ cells does not hang (cap or prune if needed).
 
-### SE Advanced Techniques — Future
-- [ ] `_XYWing` (weight ≈5.6): pivot `{X,Y}` + wings `{X,Z}/{Y,Z}`; eliminate Z from cells seeing both wings; add to `_TECHNIQUES` after `_HiddenQuad`.
-- [ ] `_XYZWing` (weight ≈5.8): pivot `{X,Y,Z}` + wings `{X,Z}/{Y,Z}`; eliminate Z from cells seeing all three; add to `_TECHNIQUES` after `_XYWing`.
-- [ ] `_UniqueRectangle` (weight ≈6.0–6.5): detect deadly pattern in 2×2 bi-value cells across two regions; restrict candidates to break ambiguity (types 1–4).
-- [ ] `_BUG` (weight ≈6.5): bivalue universal grave — all but one unsolved cell is bivalue; force placement of the extra candidate.
-- [ ] `_AlignedPairExclusion` (weight ≈6.5–7.0): pairwise constraint elimination across cells aligned in a unit.
-- [ ] `_ForcingChain` (weight ≈7.0+): assumption-based chain; detect contradiction to force value or elimination.
-- [ ] Calibrate weights against reference puzzle sets; adjust score thresholds if Easy/Medium/Hard/Extreme boundaries drift.
+### SE Advanced Techniques
+- [x] `_XYWing` (weight ≈5.6): pivot `{X,Y}` + wings `{X,Z}/{Y,Z}`; eliminate Z from cells seeing both wings; add to `_TECHNIQUES` after `_HiddenQuad`.
+- [x] `_XYZWing` (weight ≈5.8): pivot `{X,Y,Z}` + wings `{X,Z}/{Y,Z}`; eliminate Z from cells seeing all three; add to `_TECHNIQUES` after `_XYWing`.
+- [x] `_UniqueRectangle` (weight ≈6.0–6.5): detect deadly pattern in 2×2 bi-value cells across two regions; restrict candidates to break ambiguity (types 1–4).
+- [x] `_BUG` (weight ≈6.5): bivalue universal grave — all but one unsolved cell is bivalue; force placement of the extra candidate.
+- [x] `_AlignedPairExclusion` (weight ≈6.5–7.0): pairwise constraint elimination across cells aligned in a unit.
+- [x] `_ForcingChain` (weight ≈7.0+): assumption-based chain; detect contradiction to force value or elimination.
+- [x] Calibrate weights against reference puzzle sets; adjust score thresholds if Easy/Medium/Hard/Extreme boundaries drift.
 
 ## Variants & Assistance (Beta)
 
