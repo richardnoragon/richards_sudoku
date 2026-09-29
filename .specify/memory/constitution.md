@@ -1,50 +1,46 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: n/a → 1.0.0
+- Modified principles: n/a → I. Variant Correctness, II. Accessibility and Playability First, III. Test-First Quality Gate, IV. Release Discipline and Compatibility, V. Simplicity, Precision, and Maintainability
+- Added sections: Project Constraints, Development Workflow
+- Removed sections: none
+- Templates requiring updates: .specify/templates/plan-template.md — ✅ reviewed for constitution-check alignment; .specify/templates/spec-template.md — ✅ reviewed for requirement and acceptance alignment; .specify/templates/tasks-template.md — ✅ reviewed for test-first and release-gate alignment
+- Follow-up TODOs: none
+-->
+
+# richards_sudoku Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Variant Correctness
+The project MUST preserve puzzle rule correctness across all supported variants: standard Sudoku, Jigsaw, Str8ts, Killer, 1to25, Codewords, KenKen, and Kakuro. Every variant's solver, generator, validator, and UI behavior MUST match the published rules before release. When a rule interpretation is ambiguous, the project MUST choose the documented canonical interpretation and record it in design notes rather than silently diverging.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Accessibility and Playability First
+The app MUST remain playable by keyboard and assistive technology users. Status, focus, labels, and feedback MUST be clear enough for a player to understand current state, legal moves, errors, and recovery actions without guesswork. UX changes that improve clarity, cognition, or input flow take priority over purely cosmetic refinements.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First Quality Gate
+New behavior MUST be covered by tests before implementation is considered complete. Regression tests MUST exist for solver correctness, variant logic, persistence boundaries, and UI-critical user flows. CI MUST fail when the targeted behavior is untested or when static checks detect issues. The project MUST run the same quality gates locally prior to release: ruff check src, mypy, and pytest -q with the headless Qt configuration.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Release Discipline and Compatibility
+The project MUST define and preserve a release baseline: versioned features, changelog intent, and migration notes for any persistence or behavior changes. Breaking changes to puzzle rules, save format, or user-facing workflows MUST be explicit, documented, and versioned. Releasing without validation against the current release checklist is prohibited.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Simplicity, Precision, and Maintainability
+The codebase MUST prefer explicit, readable implementations over cleverness. Shared contracts, model boundaries, and naming MUST be consistent across solver, persistence, and UI layers. Complexity MUST be justified by a concrete requirement; otherwise, the simpler and more testable solution wins.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Project Constraints
+The project is a Python 3.13 desktop application built around PyQt6 and a solver-centric architecture. The repository MUST keep its current library boundaries explicit: model, services, persistence, UI, and solver responsibilities remain separate, and cross-layer coupling is not allowed unless required by a verified design need. Save and state interactions MUST remain deterministic and recoverable; user progress MUST not be lost silently. All generator, solver, and difficulty logic MUST remain reproducible under headless CI conditions.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development Workflow
+All feature work MUST follow the Spec Kit flow: generate or update requirements, plan, and task artifacts before implementation when the change is not a trivial fix. Each task or story MUST define testable outcomes, and implementation MUST stop when validation evidence is missing. Reviews MUST confirm compliance with variant rules, accessibility requirements, release readiness, and repository quality gates before merge. Changes that affect puzzle correctness, persistence, or UX MUST include the relevant validation evidence in the review record.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+This Constitution governs all product, engineering, and release decisions for richards_sudoku. It supersedes informal practices where conflict exists. Any amendment MUST be proposed with a concrete governance reason, the updated principle or rule, and the migration or compatibility impact. Changes to rules or principles require a PR that includes the revised text, rationale, and evidence that the project remains compliant with the existing release gates.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+The project MUST use semantic versioning for constitutional changes:
+- MAJOR: backward-incompatible governance or rule changes;
+- MINOR: new principle or material expansion of an existing rule;
+- PATCH: clarifying or editorial updates that do not change behavior.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Compliance review MUST check: solver correctness, accessibility expectations, persistence safety, and CI quality-gate results. If a rule cannot be met, the team MUST document the exception, the risk, and the corrective action before merging.
+
+**Version**: 1.0.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13

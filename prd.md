@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD): richards_sudoku
+# Product Requirements Document (PRD): Sudoku-inator
 
 ## 1. Overview
 A Python application that allows users to **create, solve, and share Sudoku puzzles** across multiple variants. The system supports game persistence (load/save), user assistance features (hints, pencil marks), and performance tracking (time, moves, hint usage).

@@ -1,7 +1,7 @@
-# Designer Style UX Spec — Richards Sudoku
+# Designer Style UX Spec — Sudoku-inator
 
 ## Overview
-Richards Sudoku is a desktop puzzle app for both casual and advanced Sudoku players. The product should feel calm, trustworthy, and easy to learn, while still supporting deeper variant play, advanced strategies, and technical reliability.
+Sudoku-inator is a desktop puzzle app for both casual and advanced Sudoku players. The product should feel calm, trustworthy, and easy to learn, while still supporting deeper variant play, advanced strategies, and technical reliability.
 
 This specification defines the user experience direction for the current product phase. It focuses on clarity, accessibility, feedback quality, and a clean progression from new user onboarding to expert play.
 

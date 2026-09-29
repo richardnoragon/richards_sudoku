@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD) Checklist: richards_sudoku
+# Product Requirements Document (PRD) Checklist: Sudoku-inator
 
 ## 1. Game Management
 

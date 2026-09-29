@@ -4,7 +4,7 @@ description: Capture per-task implement progress (currentStep=implement) into .s
   for the Companion GUI
 compatibility: Requires spec-kit project structure with .specify/ directory
 metadata:
-  author: github-spec-kit
+  author: alfredoperez
   source: extension:companion
 ---
 

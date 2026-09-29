@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -333,6 +334,28 @@ def _deserialize(data: dict[str, Any]) -> SaveState:
 
 
 # ---------------------------------------------------------------------------
+# Backup helpers
+# ---------------------------------------------------------------------------
+
+def backup_path_for(path: str | os.PathLike) -> Path:
+    """Return the backup path associated with *path*.
+
+    The backup is a sibling file with the suffix ``.bak`` added to the
+    destination name, e.g. ``game.json`` -> ``game.json.bak``.
+    """
+    dest = Path(path)
+    return dest.with_name(f"{dest.name}.bak")
+
+
+def restore_backup(path: str | os.PathLike) -> SaveState:
+    """Load the last backup for *path* and return the restored save state."""
+    backup = backup_path_for(path)
+    if not backup.exists():
+        raise FileNotFoundError(f"No backup file found for '{path}'.")
+    return load(backup)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -341,9 +364,14 @@ def save(state: SaveState, path: str | os.PathLike) -> None:
 
     The file is written to a temporary sibling first; the rename is
     atomic on POSIX and best-effort atomic on Windows (os.replace).
+    If a prior save exists, it is copied to a sibling ``.bak`` file before the
+    overwrite so a recent state can be restored after an accidental overwrite.
     """
     dest = Path(path)
     dest.parent.mkdir(parents=True, exist_ok=True)
+    backup = backup_path_for(dest)
+    if dest.exists():
+        shutil.copy2(dest, backup)
     payload = json.dumps(_serialize(state), indent=2, ensure_ascii=False)
 
     # Write to a temp file in the same directory so the rename stays on one

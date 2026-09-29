@@ -12,7 +12,7 @@ import json
 import pytest
 
 from richards_sudoku.model.types import Variant, VariantMetadata
-from richards_sudoku.services.variant_registry import REGISTRY
+from richards_sudoku.services.variant_registry import REGISTRY, register_variant
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +87,30 @@ class TestBatchJRegistry:
     def test_kakuro_factory_has_clues_constraint(self) -> None:
         meta = REGISTRY[Variant.KAKURO]["factory"](seed=0)
         assert "clues" in meta.constraints
+
+    def test_register_variant_supports_extension_hook(self) -> None:
+        original = REGISTRY[Variant.STANDARD].copy()
+        try:
+            def _demo_factory(seed: int = 0, difficulty: str = "medium") -> VariantMetadata:
+                return VariantMetadata(
+                    name=Variant.STANDARD,
+                    size=9,
+                    symbols=list(range(1, 10)),
+                    region_layout=[[0 for _ in range(9)] for _ in range(9)],
+                    constraints={"demo": True},
+                )
+
+            entry = register_variant(
+                Variant.STANDARD,
+                factory=_demo_factory,
+                constraint_ok=lambda grid: True,
+            )
+            assert entry["factory"] is _demo_factory
+            assert callable(entry["constraint_ok"])
+            meta = REGISTRY[Variant.STANDARD]["factory"]()
+            assert meta.constraints["demo"] is True
+        finally:
+            REGISTRY[Variant.STANDARD] = original
 
 
 # ---------------------------------------------------------------------------

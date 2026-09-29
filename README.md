@@ -1,7 +1,20 @@
-# richards_sudoku
+# Sudoku-inator
 
-richards_sudoku is a Python + PyQt Sudoku app focused on rich variant support,
+Sudoku-inator is a Python + PyQt Sudoku app focused on rich variant support,
 playability, and engineering reliability.
+
+> The internal Python package name remains `richards_sudoku` for compatibility with the existing codebase and tooling, while the public-facing product name is Sudoku-inator.
+
+## Current project status
+
+This repository is currently in a stable beta-to-release-candidate state for the implemented feature set. The core gameplay, persistence, variant support, and release documentation are in place and have been validated against the repo’s real test suite.
+
+Verified baseline:
+
+- `QT_QPA_PLATFORM=offscreen python3 -m pytest -q`
+- Result: `583 passed, 2 warnings in 2.92s`
+- Supported variants: Standard Sudoku, Jigsaw, Str8ts, Killer, 1to25, Codewords, KenKen, and Kakuro
+- Runtime baseline: Python 3.13+, PyQt6 desktop app
 
 ## What You Can Play
 
@@ -23,8 +36,34 @@ playability, and engineering reliability.
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -e .[dev]
-richards-sudoku
+sudoku-inator
 ```
+
+## First-Time User Onboarding
+
+New users should start with the core workflow below:
+
+1. Launch Sudoku-inator and choose a variant from the board setup flow.
+2. Start with a familiar grid such as Standard Sudoku or Jigsaw before moving to more advanced layouts.
+3. Use the status bar and hint guidance to understand available moves and puzzle progress.
+4. Save regularly and keep the project backup guidance in mind when working with local game files.
+
+For a deeper walkthrough, see [USER_GUIDE.md](USER_GUIDE.md).
+
+## Contributing
+
+We welcome bug reports, improvements, and variant work. For the contributor workflow, setup steps, testing expectations, and release checklist, see [CONTRIBUTING.md](CONTRIBUTING.md) and [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
+
+## Release Cadence and Roadmap
+
+The project follows a milestone-based release model:
+
+- stability and beta-grade reliability come first,
+- variant maturity and validation follow,
+- product polish and onboarding improve the user experience,
+- extensibility and platform growth remain the longer-term architecture goal.
+
+The active roadmap is tracked in [ROADMAP.md](ROADMAP.md), and release notes are maintained in [CHANGELOG.md](CHANGELOG.md).
 
 ## Phase 0 UX Improvements
 

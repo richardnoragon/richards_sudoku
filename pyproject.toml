@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "richards-sudoku"
+name = "sudoku-inator"
 version = "0.1.0"
-description = "A Python + PyQt6 Sudoku application supporting multiple variants."
+description = "Sudoku-inator: a Python + PyQt6 Sudoku application supporting multiple variants."
 requires-python = ">=3.13"
 dependencies = [
     "PyQt6>=6.10",
@@ -20,6 +20,7 @@ dev = [
 ]
 
 [project.scripts]
+sudoku-inator = "richards_sudoku.main:main"
 richards-sudoku = "richards_sudoku.main:main"
 
 [tool.setuptools.packages.find]

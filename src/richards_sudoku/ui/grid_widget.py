@@ -83,8 +83,13 @@ class SudokuGridWidget(QWidget):
         """Bind a new board+meta and repaint."""
         self._board = board
         self._meta = meta
-        self._selected = None
+        self.clear_selection()
         self.updateGeometry()  # K3: let QScrollArea re-evaluate size hints
+        self.update()
+
+    def clear_selection(self) -> None:
+        """Clear the current cell selection without requiring a board to exist."""
+        self._selected = None
         self.update()
 
     def refresh(self) -> None:

@@ -546,6 +546,16 @@ class TestHintModes:
         result = ctrl.hint(mode="show_candidate")
         assert result is True
 
+    def test_progress_summary_reports_fill_and_single_count(self, controller_with_game: GameController):
+        """Board analytics should surface progress and guidance-ready candidate counts."""
+        ctrl = controller_with_game
+        summary = ctrl.progress_summary()
+        assert summary["total"] == 81
+        assert 0 <= summary["percent"] <= 100
+        assert summary["filled"] <= summary["total"]
+        assert summary["naked_singles"] >= 0
+        assert "Progress" in ctrl.progress_text
+
 
 class TestRestartGame:
 

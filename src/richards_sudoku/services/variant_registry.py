@@ -50,6 +50,48 @@ def _killer_constraint_ok(cages: list[dict[str, Any]]) -> Callable[[Grid], bool]
     return _check
 
 
+def register_variant(
+    variant: Variant,
+    *,
+    factory: Callable[..., VariantMetadata] | None = None,
+    constraint_ok: Callable[[Grid], bool] | None = None,
+    constraint_ok_factory: Callable[[VariantMetadata], Callable[[Grid], bool]] | None = None,
+) -> dict[str, Any]:
+    """Register or update a variant entry with the callbacks needed for generation and validation.
+
+    This gives the project a clear extension point for adding future rule engines
+    without making the central controller or UI own rule-specific knowledge.
+    """
+    if not isinstance(variant, Variant):
+        raise TypeError(f"variant must be a Variant enum member; got {variant!r}.")
+
+    entry = REGISTRY.setdefault(variant, {})
+    if factory is not None:
+        entry["factory"] = factory
+    if constraint_ok is not None:
+        entry["constraint_ok"] = constraint_ok
+    if constraint_ok_factory is not None:
+        entry["constraint_ok_factory"] = constraint_ok_factory
+    if "factory" not in entry:
+        raise ValueError(f"Variant '{variant.value}' must register a factory callback.")
+    return entry
+
+
+def list_registered_variants() -> tuple[Variant, ...]:
+    """Return the registered variant keys in a stable order."""
+    return tuple(REGISTRY.keys())
+
+
+def resolve_constraint_ok(meta: VariantMetadata) -> Callable[[Grid], bool] | None:
+    """Return the variant constraint callback for *meta* using the registry's factory hooks when present."""
+    reg = REGISTRY.get(meta.name, {})
+    factory = reg.get("constraint_ok_factory")
+    if factory is not None:
+        return factory(meta)
+    callback = reg.get("constraint_ok")
+    return callback if callable(callback) else None
+
+
 # ---------------------------------------------------------------------------
 # Factory helpers
 # ---------------------------------------------------------------------------

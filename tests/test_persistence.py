@@ -8,7 +8,14 @@ from pathlib import Path
 import pytest
 
 from richards_sudoku.model.types import Board, Cell, Move, Variant, VariantMetadata
-from richards_sudoku.persistence import PersistenceError, SaveState, load, save
+from richards_sudoku.persistence import (
+    PersistenceError,
+    SaveState,
+    backup_path_for,
+    load,
+    restore_backup,
+    save,
+)
 from richards_sudoku.services.stats import GameStats
 from richards_sudoku.services.timer import GameTimer
 
@@ -191,6 +198,25 @@ class TestAtomicWrite:
         dest = tmp_path / "sub" / "dir" / "game.json"
         save(state, dest)
         assert dest.exists()
+
+    def test_save_creates_backup_before_overwrite(self, tmp_path, state):
+        dest = tmp_path / "game.json"
+        save(state, dest)
+        state2 = SaveState(
+            board=Board(size=9, variant=Variant.STANDARD),
+            variant_meta=state.variant_meta,
+            solution=None,
+            timer=state.timer,
+            stats=state.stats,
+        )
+        state2.board.cell(0, 0).value = 9
+        state2.board.cell(0, 0).is_fixed = True
+        save(state2, dest)
+        backup = backup_path_for(dest)
+        assert backup.exists()
+        restored = restore_backup(dest)
+        assert restored.board.cell(0, 0).value == 5
+        assert restored.board.cell(0, 0).is_fixed is True
 
 
 # ---------------------------------------------------------------------------

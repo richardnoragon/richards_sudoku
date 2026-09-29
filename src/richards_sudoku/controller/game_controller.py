@@ -25,7 +25,7 @@ from richards_sudoku.services.stats import GameStats
 from richards_sudoku.services.timer import GameTimer
 from richards_sudoku.services.undo_redo import UndoRedoStack
 from richards_sudoku.services.difficulty_se import grade as _grade_se
-from richards_sudoku.services.variant_registry import REGISTRY
+from richards_sudoku.services.variant_registry import resolve_constraint_ok
 from richards_sudoku.solver.generator import GenerationCancelled, generate_puzzle
 from richards_sudoku.solver.solver import Grid
 
@@ -150,6 +150,47 @@ class GameController:
         """Hints left this game, or None for unlimited."""
         return self._hints_remaining
 
+    def progress_summary(self) -> dict[str, int | float]:
+        """Return a lightweight board analytics summary for the current puzzle."""
+        if self._board is None:
+            return {"filled": 0, "total": 0, "remaining": 0, "percent": 0.0, "naked_singles": 0}
+
+        total = 0
+        filled = 0
+        naked_singles = 0
+        for r in range(self._board.size):
+            for c in range(self._board.size):
+                cell = self._board.cell(r, c)
+                if cell.is_black:
+                    continue
+                total += 1
+                if cell.value is not None:
+                    filled += 1
+                elif len(cell.candidates) == 1:
+                    naked_singles += 1
+
+        remaining = max(total - filled, 0)
+        percent = (filled / total * 100.0) if total else 0.0
+        return {
+            "filled": filled,
+            "total": total,
+            "remaining": remaining,
+            "percent": percent,
+            "naked_singles": naked_singles,
+        }
+
+    @property
+    def progress_text(self) -> str:
+        """User-facing progress string used by the status bar and guidance UI."""
+        summary = self.progress_summary()
+        if summary["total"] == 0:
+            return "Progress 0% • 0 singles"
+
+        percent = float(summary["percent"])
+        singles = int(summary["naked_singles"])
+        hints = self._hints_remaining if self._hints_remaining is not None else "∞"
+        return f"Progress {percent:.0f}% • {singles} singles • hints {hints}"
+
     @property
     def se_rating(self) -> tuple[float, str]:
         """(score, label) from the SukakuExplainer grader for the current puzzle."""
@@ -192,9 +233,11 @@ class GameController:
         if seed is None:
             seed = random.randrange(2 ** 31)
 
-        # Variant-specific constraint function from the registry
-        reg = REGISTRY.get(meta.name, {})
-        constraint_ok = reg.get("constraint_ok")
+        # Variant-specific constraint function from the registry. Use the
+        # shared resolver so metadata-driven variants such as Killer build
+        # their checks from the live layout rather than relying on a stale
+        # static entry.
+        constraint_ok = resolve_constraint_ok(meta)
         cancel_flag: list[bool] = [False]
 
         puzzle, solution = generate_puzzle(

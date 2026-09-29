@@ -43,6 +43,87 @@ from typing import Any
 # Public API
 # ---------------------------------------------------------------------------
 
+def export_puzzle_pack(
+    puzzles: list[dict[str, Any]],
+    *,
+    title: str = "Sudoku-inator Puzzle Pack",
+    description: str = "",
+) -> str:
+    """Serialize a list of puzzles to a simple pack format for curated content.
+
+    Each puzzle is represented by the same dictionary shape used by the rest of
+    the project: ``board``, ``meta``, ``seed``, and ``difficulty``.
+    """
+    if not puzzles:
+        raise ValueError("Puzzle pack must contain at least one puzzle.")
+
+    lines = [
+        f"pack_title: {title}",
+        f"pack_description: {description}",
+        f"puzzle_count: {len(puzzles)}",
+    ]
+    for index, puzzle in enumerate(puzzles, start=1):
+        lines.append(f"--- puzzle {index} ---")
+        block = export_text(
+            puzzle["board"],
+            puzzle["meta"],
+            seed=int(puzzle.get("seed", 0)),
+            difficulty=str(puzzle.get("difficulty", "medium")),
+        )
+        lines.extend(block.rstrip().splitlines())
+    return "\n".join(lines) + "\n"
+
+
+def import_puzzle_pack(text: str) -> list[dict[str, Any]]:
+    """Load a curated puzzle pack and return the contained puzzle entries.
+
+    Each entry contains the pack metadata plus the puzzle fields needed for
+    future library or onboarding workflows.
+    """
+    lines = text.splitlines()
+    pack_title = "Sudoku-inator Puzzle Pack"
+    pack_description = ""
+
+    metadata_lines: list[str] = []
+    blocks: list[str] = []
+    current: list[str] = []
+
+    for line in lines:
+        if line.startswith("pack_title:"):
+            pack_title = line.split(":", 1)[1].strip()
+            continue
+        if line.startswith("pack_description:"):
+            pack_description = line.split(":", 1)[1].strip()
+            continue
+        if line.startswith("puzzle_count:"):
+            continue
+        if line.startswith("---"):
+            if current:
+                blocks.append("\n".join(current))
+                current = []
+            continue
+        current.append(line)
+    if current:
+        blocks.append("\n".join(current))
+
+    results: list[dict[str, Any]] = []
+    for block in blocks:
+        if not block.strip():
+            continue
+        board, meta, seed, difficulty = import_text(block)
+        results.append(
+            {
+                "title": pack_title,
+                "description": pack_description,
+                "board": board,
+                "meta": meta,
+                "seed": seed,
+                "difficulty": difficulty,
+            }
+        )
+    return results
+
+
 def export_text(
     board_values: list[list[int | None]],
     meta_dict: dict[str, Any],

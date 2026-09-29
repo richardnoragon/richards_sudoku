@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from richards_sudoku.controller.game_controller import GameController
+from richards_sudoku.model.types import VariantMetadata
 from richards_sudoku.ui.game_complete_dialog import GameCompleteDialog
 from richards_sudoku.ui.grid_widget import SudokuGridWidget
 from richards_sudoku.ui.new_game_dialog import NewGameDialog
@@ -95,17 +96,27 @@ class MainWindow(QMainWindow):
         self._build_toolbar()
         self._build_status_bar()
 
-        # --- Timer display refresh ---
+        self._ctrl.new_game(
+            meta=VariantMetadata.standard_9x9(),
+            difficulty="medium",
+            seed=random.randrange(2 ** 31),
+            hint_limit=3,
+        )
+        self._refresh_progress_label()
         self._clock = QTimer(self)
         self._clock.setInterval(1000)
         self._clock.timeout.connect(self._refresh_timer_label)
 
+        self._refresh_difficulty_label()
+        self._refresh_board_context("New game started.")
         self._update_action_states()
 
     def _refresh_board_context(self, message: str | None = None) -> None:
         """Reset shell labels after a new board is bound or restarted."""
+        self._grid.clear_selection()
         self._lbl_cell.clear()
         self._refresh_timer_label()
+        self._refresh_progress_label()
         self._update_action_states()
         if message is not None:
             self.statusBar().showMessage(message, 3000)
@@ -264,6 +275,11 @@ class MainWindow(QMainWindow):
         self._lbl_timer.setAccessibleName("Elapsed game time")
         sb.addPermanentWidget(self._lbl_timer)
 
+        self._lbl_progress = QLabel("Progress 0% • 0 singles")
+        self._lbl_progress.setFont(make_font(9))
+        self._lbl_progress.setAccessibleName("Board progress and guidance summary")
+        sb.addPermanentWidget(self._lbl_progress)
+
         self._lbl_difficulty = QLabel("SE: ---")
         self._lbl_difficulty.setFont(make_font(9))
         self._lbl_difficulty.setAccessibleName("Puzzle difficulty rating")
@@ -299,6 +315,7 @@ class MainWindow(QMainWindow):
 
     def _on_cell_selected(self, row: int, col: int) -> None:
         self._lbl_cell.setText(f"Selected: R{row + 1}C{col + 1}")
+        self._refresh_progress_label()
         self.statusBar().showMessage(
             f"Selected R{row + 1}C{col + 1}. Use arrows or Tab to navigate.",
             2000,
@@ -307,6 +324,7 @@ class MainWindow(QMainWindow):
     def _on_edit_made(self, *_args) -> None:
         """Called after any value or pencil-mark change; refresh action states."""
         self._update_action_states()
+        self._refresh_progress_label()
 
     def _on_new_game(self) -> None:
         initial_seed = random.randrange(2 ** 31)
@@ -403,6 +421,9 @@ class MainWindow(QMainWindow):
         elapsed = int(self._ctrl.elapsed_seconds)
         mins, secs = divmod(elapsed, 60)
         self._lbl_timer.setText(f"{mins:02d}:{secs:02d}")
+
+    def _refresh_progress_label(self) -> None:
+        self._lbl_progress.setText(self._ctrl.progress_text)
 
     def _refresh_codebook_panel(self, meta) -> None:
         """Show/update the Codebook Panel for Codewords; hide it for all other variants."""

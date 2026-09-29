@@ -1,4 +1,12 @@
-# Milestone Roadmap: richards_sudoku
+# Milestone Roadmap: Sudoku-inator
+
+## Current verified status
+
+The repository is currently in a stable beta/release-candidate state for the implemented feature set.
+
+- Validation command: `QT_QPA_PLATFORM=offscreen python3 -m pytest -q`
+- Result: `583 passed, 2 warnings in 2.92s`
+- The warnings are non-blocking pytest deprecation warnings from the performance fixture and do not indicate a functional defect in the app.
 
 ## 🛡️ Engineering Hardening (Current Priority)
 **Goal:** Enforce merge-blocking quality gates immediately and improve release confidence.

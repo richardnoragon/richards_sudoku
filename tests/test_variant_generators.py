@@ -13,6 +13,7 @@ from collections import deque
 import pytest
 
 from richards_sudoku.model.types import Variant, VariantMetadata
+from richards_sudoku.services.variant_registry import resolve_constraint_ok
 from richards_sudoku.solver.generator import generate_solution
 from richards_sudoku.solver.variant_generators import (
     CagePartitioner,
@@ -213,6 +214,21 @@ class TestStr8tsMaskGenerator:
 # ---------------------------------------------------------------------------
 # CagePartitioner tests
 # ---------------------------------------------------------------------------
+
+def test_killer_constraint_resolves_from_metadata() -> None:
+    """Variant-specific cage rules must resolve via the shared registry path."""
+    meta = VariantMetadata(
+        name=Variant.KILLER,
+        size=9,
+        symbols=list(range(1, 10)),
+        region_layout=[[(r // 3) * 3 + (c // 3) for c in range(9)] for r in range(9)],
+        constraints={"cages": [{"cells": [[0, 0], [0, 1]], "sum": 7}]},
+    )
+    constraint_ok = resolve_constraint_ok(meta)
+    assert constraint_ok is not None
+    assert constraint_ok([[1, 6, *([0] * 7)], [0] * 9, *([[0] * 9] for _ in range(7))]) is True
+    assert constraint_ok([[1, 5, *([0] * 7)], [0] * 9, *([[0] * 9] for _ in range(7))]) is False
+
 
 class TestCagePartitioner:
     SIZE = 9
