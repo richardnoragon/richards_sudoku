@@ -2,9 +2,9 @@
   "schema_version": "1.0",
   "extensions": {
     "companion": {
-      "version": "0.22.0",
+      "version": "0.23.0",
       "source": "local",
-      "manifest_hash": "sha256:d11f6d93175c5ad9bc7eb5816af99e63cedbc2fdb4ea5da4c63a0435e3bb7100",
+      "manifest_hash": "sha256:1fb0b64a279599c6369eb6d8ab383cc65432f56d2ea74e1600eac45e1e36b2fd",
       "enabled": true,
       "priority": 10,
       "registered_commands": {},
@@ -31,7 +31,7 @@
         "speckit-companion-living-coverage",
         "speckit-companion-living-sync"
       ],
-      "installed_at": "2026-09-29T11:09:38.041446+00:00"
+      "installed_at": "2026-10-02T12:39:44.458647+00:00"
     }
   }
 }

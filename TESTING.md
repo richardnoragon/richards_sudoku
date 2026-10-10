@@ -1,261 +1,176 @@
 # Testing
 
-This document describes the testing approach for Sudoku-inator. It is intended to support continuous validation, release readiness, and regression protection across the project’s Python and PyQt6 codebase.
+## Alpha evidence requirements
 
-## Current verified status
+The [Alpha standard](alpha.md) requires tests for major workflows plus an independent
+handoff. The 2026-10-01 implementation pass adds regression evidence below;
+the earlier 2026-09-29 results are retained as historical evidence.
 
-The project is currently validated on the mainline branch with the following real regression run:
+For an Alpha candidate record revision, platform, dependency versions, tester,
+commands, outcomes, and failures. Cover generation/play/completion, all enabled
+variant input paths, hints, pencil marks, undo/redo, restart, save/reopen/resume,
+UI import/export/check, malformed files, backup recovery, and unsaved transitions.
+Link regression checks for DOC-01–06 to that evidence. Record the DOC-09 exercise
+from [CONTRIBUTING.md](CONTRIBUTING.md#independent-alpha-handoff-doc-09), including
+architecture review and the small verified change. No independent handoff record
+or manual cross-platform acceptance record is currently available.
+
+Promote only after all [seven criteria](PROJECT_STATUS.md#alpha-readiness) are met.
+Beta needs ordinary-user reliability evidence; publication also needs current
+platform CI, governance, and release approvals.
+
+## Latest local validation
+
+Implementation pass on **2026-10-01**, working tree based on `2149d7d`.
+Tester: the implementing Codex agent; this is not the independent DOC-09 handoff.
+
+- Final installed-wheel pytest result: **614 passed in 15.59s; no warnings**.
+- Ruff (`python3 -m ruff check src`): passed.
+- Mypy (`python3 -m mypy`): passed for the three configured model files.
+- Markdown lint: passed for all 155 Markdown files; maintained-document local file
+  links checked after the documentation update.
+- DOC-08's two fixture deprecation warnings are absent.
+
+### Clean installed-wheel verification
+
+Built `sudoku_inator-0.1.0-py3-none-any.whl`, installed it into an isolated temporary
+virtual environment, copied the tests/config outside the checkout, and ran pytest
+there. The imported package path was checked to belong to that environment.
+Runtime: Linux, Python 3.14.4, PyQt6 6.11.0, Qt build 6.11.0 (Qt6 distribution 6.11.2), pytest 9.1.1, pytest-qt 4.5.0.
+
+The host lacks `ensurepip`, so `python3 -m venv` reported the missing venv package.
+For this check, pip's `--python <temporary-env>/bin/python` option installed the wheel
+and test dependencies into the isolated interpreter. README documents the normal
+fix: install the distribution's matching Python venv package. No global Python
+packages or system packages were changed.
+
+Reproduction after creating an isolated environment:
+
+```bash
+python3 -m pip wheel --no-deps . --wheel-dir /tmp/sudoku-wheels
+# Install the wheel and test dependencies in that environment, then copy tests
+# and pyproject.toml to an external directory and run from there:
+QT_QPA_PLATFORM=offscreen /path/to/environment/bin/python -m pytest tests -q
+```
+
+An offscreen QApplication smoke check constructed and showed MainWindow, ran the
+event loop, and closed successfully. Both CLI entry points are installed.
+This verifies installation and startup; desktop rendering and human usability
+still need manual acceptance on supported platforms.
+
+### Added regression coverage
+
+`tests/test_alpha_workflows.py` covers:
+
+- UI text import/export, Check Board, failed import, and generated-dialog handoff.
+- JSON restore of hints, notes, original clues, Codewords hypotheses, and legacy defaults.
+- Atomic replace failure, unchanged previous save/backup, and cleanup of temporary files.
+- Save/Discard/Cancel transitions, including cancelled/failed saves.
+- F4 value 25, pencil mode, deletion, undo/redo; hidden/locked/editable codebook fields.
+- Elimination history, unknown hints, and fixed-reveal history safety.
+- Worker → play → save → load → completion → restart for all variants, including
+  KenKen 4×4/6×6/9×9 and the hard 25×25 template path (seed 42).
+- Bounded uniqueness proof for generated Str8ts, Killer, KenKen, and Kakuro;
+  explicit ambiguous/unique/invalid Kakuro fixtures and cancelled/exhausted search.
+- Undoing completion resumes timing; redoing the final move triggers completion.
+
+No current GitHub CI/ruleset checks, manual desktop/platform sessions, release
+approvals, or independent developer handoff were performed. DOC-06 manual
+accessibility, DOC-07 platform acceptance, and DOC-09 remain open.
+
+## Historical local validation (2026-09-29)
+
+Run on 2026-09-29 against the working tree based on `2149d7d`, on Linux with
+Python 3.14.4 and the installed PyQt6 environment:
 
 ```bash
 QT_QPA_PLATFORM=offscreen python3 -m pytest -q
+python3 -m ruff check src
+python3 -m mypy
 ```
 
-Result: `583 passed, 2 warnings in 2.92s`
+- Pytest: **583 passed, 2 warnings in 2.64s**.
+- Ruff: all checks passed.
+- Mypy: no issues in the three configured model files.
+- The two `PytestRemovedIn10Warning` warnings concern an instance-method,
+  class-scoped fixture in `tests/test_performance.py`. Tracked as DOC-08.
 
-The currently reported warnings are non-blocking pytest deprecation warnings from the class-scoped performance fixture and do not indicate a product-level failure.
+At that review, manual gameplay, fresh installation, current remote CI, and branch
+protection still required release evidence. The newer local install results below
+supersede the local-install gap only. See
+[PROJECT_STATUS.md](PROJECT_STATUS.md) and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+The existing `.venv` lacked pytest during this review; commands above used `python3`.
 
-## Test strategy
+## Setup and commands
 
-The project uses a layered test model intended to verify correctness at the right level without slowing development.
-
-### 1. Unit tests
-Unit tests validate the behavior of isolated functions and domain logic without a full UI lifecycle. These tests cover:
-
-- puzzle generation and validation
-- solver correctness and constraints
-- candidate generation and elimination rules
-- difficulty calculation and scoring logic
-- persistence serialization/deserialization
-- helpers for formatting, history, and timers
-
-The project’s primary test runner is `pytest`, configured in `pyproject.toml` to discover files under `tests/` and run functions named `test_*`.
-
-Typical command:
+Create an environment and install `.[dev]` as described in [README.md](README.md).
+Use the same environment for the app, tests, Ruff, and mypy.
 
 ```bash
-pytest
+python -m ruff check src
+python -m mypy
 ```
 
-For a narrower run during development:
+Linux/macOS headless tests:
 
 ```bash
-pytest tests/test_model_types.py
-pytest tests/test_solver.py
+QT_QPA_PLATFORM=offscreen python -m pytest -q
 ```
 
-### 2. Integration tests
-Integration tests validate interactions between major application layers, such as:
+Windows PowerShell:
 
-- controller and model coordination
-- save/load workflow against real state objects
-- solver input flowing through service logic
-- UI actions invoking the underlying controller behavior
+```powershell
+$env:QT_QPA_PLATFORM = "offscreen"
+python -m pytest -q
+```
 
-These tests are critical because the application is made up of multiple modules that must work together consistently.
-
-### 3. UI tests
-The project includes Qt-focused tests for UI behavior where appropriate, using `pytest-qt` and the PyQt6 integration layer.
-
-Examples include:
-
-- menu and action wiring
-- form field and widget behavior
-- status feedback and UI state transitions
-- application startup and shell construction
-
-Recommended commands:
+Pytest explicitly selects PyQt6 via `qt_api = "pyqt6"` in `pyproject.toml`.
+For focused runs, set the same Qt environment and run, for example:
 
 ```bash
-pytest -m qt
+python -m pytest tests/test_solver.py tests/test_persistence.py -q
+python -m pytest tests/test_ui_shell.py tests/test_wiring.py -q
+python -m pytest tests/test_performance.py -q
 ```
 
-When headless CI environments are being used, the application should be validated with the display configuration required by the Qt test harness.
+## Coverage and boundaries
 
-### 4. Performance and stability checks
-The project also includes performance-oriented validation for long-running or resource-sensitive workflows. These checks help ensure solver and generation tasks stay within acceptable limits and do not regress significantly over time.
+The suite covers models, solver/generator behavior, variant constraints, candidates,
+difficulty grading, persistence, text exchange, services, UI shell, and controller
+wiring. Passing API tests do not prove a menu action is connected or that every
+acceptance requirement is met. Open UI gaps are listed in PROJECT_STATUS.md.
 
-Example:
+The performance suite uses wall-clock assertions and fixed fixtures. Budgets are
+in [Appendix D](speckit.constitution.appendix.d.md). There is no configured
+pytest-benchmark dependency, historical regression dashboard, or automated memory gate.
+
+## CI scope
+
+[Quality Gates](.github/workflows/quality-gates.yml) runs on pull requests and pushes
+to `main`, using Python 3.13:
+
+| Job | Check |
+| --- | --- |
+| Markdown Lint | `**/*.md` with `.markdownlint-cli2.jsonc` |
+| Python Lint and Type | `ruff check src`, then `mypy` |
+| Tests (ubuntu-latest) | `xvfb-run -a pytest -q`, offscreen Qt |
+| Tests (windows-latest) | `pytest -q`, offscreen Qt |
+| Tests (macos-latest) | `pytest -q`, offscreen Qt |
+
+Ruff currently selects E9, F63, F7, F82; import sorting is not enabled.
+Mypy checks `src/sudoku_inator/model`, not the entire application.
+Markdown lint has multiple disabled rules; lint success does not validate links,
+factual accuracy, or governance compliance. Run it locally with:
 
 ```bash
-pytest tests/test_performance.py
+npx --yes markdownlint-cli2 '**/*.md'
 ```
 
-### 5. Static validation
-Static validation complements testing and should be run before release-quality merges.
+## Release acceptance
 
-- Ruff for linting
-- Mypy for type checking
-
-Typical commands:
-
-```bash
-ruff check .
-mypy src/richards_sudoku/model
-```
-
-## Acceptance tests
-
-Acceptance tests represent the user-facing behaviors that must work in a real session. They are designed to confirm that the product delivers the intended result from a gameplay and UX standpoint.
-
-### Core acceptance scenarios
-
-1. New game creation
-   - A valid puzzle is generated for the selected variant.
-   - The board initializes in a consistent state.
-   - The timer, status, and metadata start correctly.
-
-2. Puzzle completion
-   - A correctly solved board is recognized as complete.
-   - The completion state updates UI status and relevant metrics.
-
-3. Hint usage
-   - A hint reveals a valid answer without corrupting the board state.
-   - Hint limits and counters behave as expected.
-
-4. Save and restore
-   - A game can be saved and reopened without losing board state or metadata.
-   - Versioning and persistence logic remain backward compatible when possible.
-
-5. Undo and redo
-   - User actions can be reversed and re-applied in order.
-   - Undo history respects the correct game state transitions.
-
-6. Variant-specific behavior
-   - Standard Sudoku rules remain enforced.
-   - Variant-specific logic for Jigsaw, Str8ts, KenKen, Kakuro, Codewords, Killer, and 1-to-25 behaves correctly.
-
-7. User-facing reliability
-   - UI actions do not crash on repeated use.
-   - Status messages are understandable and consistent.
-   - The application remains responsive during common operations.
-
-Acceptance tests should be treated as the minimum quality gate for functional readiness.
-
-## Regression testing
-
-Regression testing is used to confirm that previously fixed defects remain fixed and that new changes do not reintroduce old failures.
-
-### Regression principles
-
-- Every bug fix should include or update a focused automated test whenever possible.
-- Critical user paths should be tested at least once in both unit-level and integration-level coverage.
-- Fixes affecting persistence, solver logic, or UI flows require expanded validation beyond the narrow test.
-
-### Recommended regression workflow
-
-1. Identify the bug or behavior change.
-2. Write a failing test that captures the original issue.
-3. Implement the fix.
-4. Run the smallest relevant test subset first.
-5. Run the broader related suite for confidence.
-6. Confirm the fix does not regress adjacent behavior.
-
-Examples of regression-sensitive areas:
-
-- solver constraint validation
-- difficulty calculation
-- save/load compatibility
-- variant selection logic
-- board analytics and candidate generation
-- PyQt action wiring
-
-## Disposable library testing
-
-Disposable library testing refers to validating logic, integrations, or helper libraries that may be temporary, experimental, or intentionally isolated from the core runtime. In this project, the intent is to test behavior in a controlled, replaceable way without depending on long-lived production assumptions.
-
-### Goals
-
-- Validate a component before it becomes a permanent dependency.
-- Keep third-party or disposable helper integrations isolated from core gameplay logic.
-- Ensure experimental features can be removed or replaced without destabilizing the application.
-
-### Approach
-
-- Test the library behind a small, stable interface.
-- Treat the library as a dependency boundary, not as the app’s core logic source of truth.
-- Validate expected inputs and outputs in isolation.
-- Verify error handling, timeouts, and fallback behavior.
-- Confirm no hidden state survives between tests.
-
-### Good patterns
-
-- Use fresh fixtures for each test case.
-- Prepare minimal in-memory data instead of reusing global application state.
-- Prefer deterministic fixtures over runtime-dependent randomness.
-- Keep disposable libraries behind wrappers when they may be removed later.
-
-### Example checks
-
-- library can parse valid puzzle data
-- invalid state is rejected gracefully
-- failure modes produce predictable exceptions or fallback behavior
-- performance remains acceptable under repeated use
-
-This gives the project a safer path for integrating experimental utilities while keeping the production codebase stable.
-
-## Release validation
-
-Release validation is the final quality gate before publishing or tagging a build. It confirms the project is ready for distribution and the public-facing experience is stable.
-
-### Release checklist
-
-Before release, all of the following should be verified:
-
-1. Full test suite passes
-   ```bash
-   pytest
-   ```
-
-2. Linting passes
-   ```bash
-   ruff check .
-   ```
-
-3. Type checks pass for the relevant modules
-   ```bash
-   mypy src/richards_sudoku/model
-   ```
-
-4. Core UI flows work in the packaged application
-   - launch app successfully
-   - open a new puzzle
-   - solve or validate standard flows
-   - save and reload
-
-5. Packaging metadata is valid
-   - project name and version are correct
-   - entry points resolve correctly
-   - dependencies install without conflict
-
-6. Regression sweeps are complete
-   - all known bug-fix tests pass
-   - no recent solver or persistence regressions remain
-
-7. Documentation is current
-   - README reflects product state
-   - architecture and testing docs are up to date
-   - changelog entries are accurate for the release
-
-### Release smoke test
-
-A minimal release smoke test should cover:
-
-- application launches
-- game starts successfully
-- one representative variant loads and is playable
-- a save file can be restored
-- a core validation path succeeds without crash
-
-### Exit criteria
-
-A release is ready only when:
-
-- the full test suite passes,
-- compatibility and packaging checks pass,
-- acceptance scenarios pass,
-- known regressions are either fixed or explicitly documented,
-- and the current build has been manually checked in a real runtime environment.
-
-## Summary
-
-The testing model for Sudoku-inator combines unit coverage, integration checks, Qt validation, regression protection, and release-level verification. This structure keeps the product stable while allowing new features and puzzle variants to be introduced with confidence.
+Record fresh environment installation, launch, generation, keyboard/mouse play,
+completion, hints, undo/redo, restart, and save/reload for the release commit.
+Exercise all enabled variants, especially large-board entry and Codewords.
+Verify error recovery, accessibility, and unsaved-progress handling manually.
+Attach the platform CI runs and resolve or explicitly defer each open gap before
+marking the [release checklist](RELEASE_CHECKLIST.md) complete.

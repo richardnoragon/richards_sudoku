@@ -1,5 +1,23 @@
 # Designer Style UX Spec — Sudoku-inator
 
+## Alpha alignment
+
+For [Alpha](alpha.md), primary controls and data safeguards must work end-to-end.
+Font customization, tutorials, and visual refinements may remain documented work;
+Alpha does not waive the broader accessibility and publication requirements.
+Current status and blockers are recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md).
+
+## Implementation status
+
+This is the target UX specification. Implemented controls are described in
+[USER_GUIDE.md](USER_GUIDE.md); gaps are tracked as DOC-01 through DOC-06 in
+[PROJECT_STATUS.md](PROJECT_STATUS.md). Initial labels/tooltips and status feedback
+are delivered. Codewords hypotheses, large-grid input, import/export UI, and
+unsaved-progress confirmations now have regression
+coverage. Adjustable fonts, contextual onboarding, and manual accessibility remain open.
+The journeys below are acceptance goals, not claims of full implementation.
+
+
 ## Overview
 Sudoku-inator is a desktop puzzle app for both casual and advanced Sudoku players. The product should feel calm, trustworthy, and easy to learn, while still supporting deeper variant play, advanced strategies, and technical reliability.
 

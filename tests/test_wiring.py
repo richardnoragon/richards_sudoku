@@ -9,15 +9,15 @@ from pytestqt.qtbot import QtBot
 
 from PyQt6.QtCore import Qt
 
-from richards_sudoku.controller.game_controller import GameController
-from richards_sudoku.main import MainWindow
-from richards_sudoku.model.types import Board, Move, Variant, VariantMetadata
-from richards_sudoku.persistence import SaveState, save
-from richards_sudoku.services.stats import GameStats
-from richards_sudoku.services.timer import GameTimer
-from richards_sudoku.ui.game_complete_dialog import GameCompleteDialog
-from richards_sudoku.ui.grid_widget import SudokuGridWidget, _all_conflict_cells
-from richards_sudoku.ui.new_game_dialog import NewGameDialog
+from sudoku_inator.controller.game_controller import GameController
+from sudoku_inator.main import MainWindow
+from sudoku_inator.model.types import Board, Move, Variant, VariantMetadata
+from sudoku_inator.persistence import SaveState, save
+from sudoku_inator.services.stats import GameStats
+from sudoku_inator.services.timer import GameTimer
+from sudoku_inator.ui.game_complete_dialog import GameCompleteDialog
+from sudoku_inator.ui.grid_widget import SudokuGridWidget, _all_conflict_cells
+from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +49,9 @@ def controller_with_game(controller: GameController) -> GameController:
 
 
 @pytest.fixture()
-def main_window(qtbot: QtBot) -> MainWindow:
+def main_window(qtbot: QtBot, monkeypatch) -> MainWindow:
+    from PyQt6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: QMessageBox.StandardButton.Discard)
     win = MainWindow()
     qtbot.addWidget(win)
     return win
@@ -800,7 +802,7 @@ class TestGameCompleteDialogDispatch:
         # Simulate game-complete callback with RESTART result by patching dialog
         import unittest.mock as mock
         with mock.patch(
-            "richards_sudoku.main.GameCompleteDialog"
+            "sudoku_inator.main.GameCompleteDialog"
         ) as MockDlg:
             instance = MockDlg.return_value
             instance.exec.return_value = None

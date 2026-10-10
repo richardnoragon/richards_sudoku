@@ -19,12 +19,12 @@ from pathlib import Path
 
 import pytest
 
-from richards_sudoku.model.types import Board, Variant, VariantMetadata
-from richards_sudoku.persistence.persistence import SaveState, load, save
-from richards_sudoku.services.difficulty_se import grade
-from richards_sudoku.services.stats import GameStats
-from richards_sudoku.services.timer import GameTimer
-from richards_sudoku.solver.generator import generate_puzzle
+from sudoku_inator.model.types import Board, Variant, VariantMetadata
+from sudoku_inator.persistence.persistence import SaveState, load, save
+from sudoku_inator.services.difficulty_se import grade
+from sudoku_inator.services.stats import GameStats
+from sudoku_inator.services.timer import GameTimer
+from sudoku_inator.solver.generator import generate_puzzle
 
 
 # ---------------------------------------------------------------------------
@@ -104,12 +104,14 @@ class TestPuzzleGeneration:
 
 class TestGradePerformance:
 
+    @staticmethod
     @pytest.fixture(scope="class")
-    def solved_board(self):
+    def solved_board():
         return _filled_standard_board()
 
+    @staticmethod
     @pytest.fixture(scope="class")
-    def standard_meta(self):
+    def standard_meta():
         return _standard_meta()
 
     def test_grade_under_100ms(self, solved_board: Board, standard_meta: VariantMetadata):
@@ -166,7 +168,7 @@ class TestKillerPermutationCap:
 
     def test_large_cage_6_cells_completes_in_1s(self):
         """_KillerCage technique on a 6-cell cage must not hang (< 1 s)."""
-        from richards_sudoku.services.difficulty_se import _KillerCage  # noqa: PLC0415
+        from sudoku_inator.services.difficulty_se import _KillerCage  # noqa: PLC0415
 
         layout = _standard_layout()
         # 6-cell cage in top-left corner spanning two boxes
@@ -204,7 +206,7 @@ class TestKillerPermutationCap:
 
     def test_large_cage_7_cells_completes_in_2s(self):
         """_KillerCage technique on a 7-cell cage completes within 2 s."""
-        from richards_sudoku.services.difficulty_se import _KillerCage  # noqa: PLC0415
+        from sudoku_inator.services.difficulty_se import _KillerCage  # noqa: PLC0415
 
         layout = _standard_layout()
         cage_cells = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0]]
@@ -262,7 +264,7 @@ class TestOneToTwentyFivePerformance:
 
     def test_generation_under_30s(self) -> None:
         """Generating a 25×25 ONE_TO_25 puzzle must complete within 30 s."""
-        from richards_sudoku.solver.variant_generators import OneToTwentyFiveGenerator
+        from sudoku_inator.solver.variant_generators import OneToTwentyFiveGenerator
 
         t0 = time.perf_counter()
         gen = OneToTwentyFiveGenerator(seed=42)
@@ -274,7 +276,7 @@ class TestOneToTwentyFivePerformance:
 
     def test_grade_under_1s(self) -> None:
         """grade() on a ONE_TO_25 puzzle must complete within 1 s."""
-        from richards_sudoku.solver.variant_generators import OneToTwentyFiveGenerator
+        from sudoku_inator.solver.variant_generators import OneToTwentyFiveGenerator
 
         size = 25
         meta = self._meta_25x25()
@@ -314,8 +316,8 @@ class TestKenKenPerformance:
 
     def test_kenken_n9_generation_under_30s(self) -> None:
         """KenKen N=9 Latin square fill + cage partitioning must complete within 30 s."""
-        from richards_sudoku.solver.generator import generate_solution
-        from richards_sudoku.solver.variant_generators import KenKenCagePartitioner
+        from sudoku_inator.solver.generator import generate_solution
+        from sudoku_inator.solver.variant_generators import KenKenCagePartitioner
 
         size = 9
         region_layout = self._kenken_layout(size)
@@ -402,7 +404,7 @@ class TestKakuroPerformance:
 
     def test_kakuro_generation_under_30s(self) -> None:
         """Kakuro template generation + digit fill must complete within 30 s."""
-        from richards_sudoku.solver.variant_generators import (
+        from sudoku_inator.solver.variant_generators import (
             KakuroFillGenerator,
             KakuroTemplateLibrary,
         )
@@ -419,7 +421,7 @@ class TestKakuroPerformance:
 
     def test_grade_kakuro_under_1s(self) -> None:
         """grade() on a Kakuro board must complete within 1 s."""
-        from richards_sudoku.solver.variant_generators import (
+        from sudoku_inator.solver.variant_generators import (
             KakuroFillGenerator,
             build_kakuro_clue_positions,
         )

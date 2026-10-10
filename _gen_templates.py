@@ -7,11 +7,11 @@ import time, sys, random, json, threading
 
 sys.setrecursionlimit(10000)
 
-from richards_sudoku.solver.variant_generators import OneToTwentyFiveGenerator
-from richards_sudoku.solver.generator import check_unique
-from richards_sudoku.solver.solver import _build_peer_cache, _build_region_units
-from richards_sudoku.services.variant_registry import REGISTRY
-from richards_sudoku.model.types import Variant
+from sudoku_inator.solver.variant_generators import OneToTwentyFiveGenerator
+from sudoku_inator.solver.generator import check_unique
+from sudoku_inator.solver.solver import _build_peer_cache, _build_region_units
+from sudoku_inator.services.variant_registry import REGISTRY
+from sudoku_inator.model.types import Variant
 
 meta = REGISTRY[Variant.ONE_TO_25]["factory"](0, "easy")
 pc = _build_peer_cache(meta.size, meta.region_layout)
@@ -27,7 +27,7 @@ TARGETS = {"hard": 305, "expert": 298}
 NEED = {"hard": 3, "expert": 3}
 SEEDS = [99, 0, 1, 2, 42, 3, 7, 11, 5, 15, 20, 25, 33, 50, 77, 8, 17, 4]
 
-output_path = r"c:\Users\richardi\richards_sudoku\_templates_output.json"
+output_path = r"c:\Users\richardi\sudoku_inator\_templates_output.json"
 # Load prior results so we can resume without regenerating.
 try:
     with open(output_path) as f:

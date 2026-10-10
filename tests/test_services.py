@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from richards_sudoku.model.types import Board, Cell, Move, Variant, VariantMetadata
-from richards_sudoku.services import (
+from sudoku_inator.model.types import Board, Cell, Move, Variant, VariantMetadata
+from sudoku_inator.services import (
     GameStats,
     GameTimer,
     UndoRedoStack,
@@ -420,8 +420,8 @@ class TestGameStats:
 # C4: update_all_candidates — variant filters
 # ---------------------------------------------------------------------------
 
-from richards_sudoku.model.types import Variant
-from richards_sudoku.services.str8ts_utils import _can_extend_straight
+from sudoku_inator.model.types import Variant
+from sudoku_inator.services.str8ts_utils import _can_extend_straight
 
 
 def _str8ts_meta_with_black(black_cells: list[tuple[int, int]]) -> VariantMetadata:

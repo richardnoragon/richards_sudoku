@@ -1,5 +1,46 @@
 # Architectural Decisions
 
+## Full rebrand (2026-10-10)
+
+The project, command, repository target, and workspace are `sudoku-inator`;
+the Python package is `sudoku_inator`. This supersedes decision 1 below, which
+is preserved as a historical record. The former import path and command are
+retired; JSON save schemas and application version remain unchanged.
+See [REBRANDING.md](REBRANDING.md) for migration and verification.
+
+## Alpha workflow decisions (2026-10-01)
+
+- Stabilize the five existing interactive hint modes; defer Multi-reveal and
+  Walkthrough. Unknown modes return failure without spending allowance.
+- Keep undo history session-local. Preserve notes and original clues in JSON;
+  compute remaining hints from the configured limit and recorded usage.
+- Store Codewords hypotheses on Board, separately from the solution mapping;
+  use CodebookMove in the shared undo stack.
+- Share partial-board validation across rendering, Check Board, and completion.
+  Variant-specific generation consumes the worker result instead of regenerating.
+- Use bounded variant search for clue removal: timeout/node exhaustion means
+  retain the clue, never claim uniqueness. Kakuro may have given digits. Str8ts
+  currently uses cyclic consecutive layouts; wider variety remains planned.
+- Architecture assessment for this change: existing UI/controller/model/services/
+  persistence boundaries remain usable; validation/search responsibilities now
+  have shared services. No major rewrite was needed. This is the implementing
+  agent's assessment, not the independent DOC-09 review.
+
+## Alpha alignment
+
+Use [alpha.md](alpha.md) when reviewing architecture stability for DOC-09. Record
+any expected major rewrite, unsettled storage/configuration decision, or scope
+change before marking the Alpha architecture criterion satisfied.
+
+## Implementation boundary
+
+These decisions describe the architectural direction. The registry, controller,
+and service boundaries exist, but UI/controller/model code still includes explicit
+variant branches. Adding a variant requires changes and tests across those layers.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for current interfaces and
+[PROJECT_STATUS.md](PROJECT_STATUS.md) for unresolved behavior.
+
+
 ## 1. Public branding stays distinct from internal package naming
 Decision: The product is branded as Sudoku-inator in user-facing documentation, while the internal Python package continues to use `richards_sudoku`.
 
@@ -93,7 +134,7 @@ Why:
 - Registry-driven metadata supports extensibility and cleaner reuse.
 
 Impact:
-- New puzzle types can be added by registering variant definitions and validation rules
+- New puzzle types start with registry definitions and also require solver, controller, UI, persistence, and test integration
 - The controller stays focused on orchestration instead of variant mechanics
 
 ---

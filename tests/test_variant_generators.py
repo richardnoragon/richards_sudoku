@@ -12,10 +12,10 @@ from collections import deque
 
 import pytest
 
-from richards_sudoku.model.types import Variant, VariantMetadata
-from richards_sudoku.services.variant_registry import resolve_constraint_ok
-from richards_sudoku.solver.generator import generate_solution
-from richards_sudoku.solver.variant_generators import (
+from sudoku_inator.model.types import Variant, VariantMetadata
+from sudoku_inator.services.variant_registry import resolve_constraint_ok
+from sudoku_inator.solver.generator import generate_solution
+from sudoku_inator.solver.variant_generators import (
     CagePartitioner,
     JigsawRegionGenerator,
     Str8tsMaskGenerator,

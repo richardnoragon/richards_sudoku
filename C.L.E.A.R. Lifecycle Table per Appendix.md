@@ -4,6 +4,14 @@
 
 # **C.L.E.A.R. Lifecycle Table (per Appendix)**
 
+## Alpha alignment
+
+The governance lifecycle below operates alongside the [Alpha maturity standard](alpha.md).
+Completed governance steps do not demonstrate working primary workflows or the
+independent developer handoff; record that evidence in project status.
+
+This table defines required governance roles and intended enforcement. Current automation is limited to [the CI enforcement plan](CI%20Enforcement%20Plan.md); accessibility audits, performance dashboards, and complete schema validation are not all automated.
+
 This table defines how each appendix moves through the governance lifecycle.  
 It is intentionally short, explicit, and enforceable.
 

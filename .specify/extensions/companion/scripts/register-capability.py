@@ -46,7 +46,7 @@ LEGACY_CONFIG_REL = cc.LEGACY_CONFIG_REL
 
 
 def _default_spec(name: str) -> str:
-    return f"{cc.DEFAULT_CAPABILITY_ROOT}/{name}/{name}{cc.SPEC_SUFFIX}"
+    return f"{cc.DEFAULT_CAPABILITY_ROOT}/{name}/spec.md"
 
 
 def _normalize_existing(living: dict) -> list[dict]:

@@ -43,6 +43,7 @@ desktop.ini
 
 # Saved game files (user data, not source)
 *.sudoku.json
+docker-saves/
 
 # Logs
 *.log

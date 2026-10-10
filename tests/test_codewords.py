@@ -18,12 +18,12 @@ from pathlib import Path
 
 import pytest
 
-from richards_sudoku.model.types import Board, Cell, Variant, VariantMetadata
-from richards_sudoku.persistence import SaveState, load, save
-from richards_sudoku.persistence.persistence import _validate_variant_constraints
-from richards_sudoku.services.stats import GameStats
-from richards_sudoku.services.timer import GameTimer
-from richards_sudoku.services.text_format import export_text, import_text
+from sudoku_inator.model.types import Board, Cell, Variant, VariantMetadata
+from sudoku_inator.persistence import SaveState, load, save
+from sudoku_inator.persistence.persistence import _validate_variant_constraints
+from sudoku_inator.services.stats import GameStats
+from sudoku_inator.services.timer import GameTimer
+from sudoku_inator.services.text_format import export_text, import_text
 
 
 # ---------------------------------------------------------------------------
@@ -72,14 +72,14 @@ def _stats() -> GameStats:
 class TestCodewordsGenerator:
 
     def test_codebook_is_bijective(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         result = CodewordsGenerator(seed=42).generate()
         codebook: dict[str, int] = result["codebook"]
         assert set(codebook.keys()) == set("ABCDEFGHI"), "codebook must cover letters A–I"
         assert set(codebook.values()) == set(range(1, 10)), "codebook must map bijectively to 1–9"
 
     def test_different_seeds_give_different_codebooks(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         r1 = CodewordsGenerator(seed=1).generate()
         r2 = CodewordsGenerator(seed=2).generate()
         # With high probability two different seeds differ; run a few to be safe
@@ -92,7 +92,7 @@ class TestCodewordsGenerator:
             assert set(book.values()) == set(range(1, 10))
 
     def test_puzzle_cells_are_none_or_valid_digit(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         result = CodewordsGenerator(seed=0, difficulty="easy").generate()
         puzzle = result["puzzle"]
         assert len(puzzle) == 9
@@ -102,14 +102,14 @@ class TestCodewordsGenerator:
                 assert v is None or (isinstance(v, int) and 1 <= v <= 9)
 
     def test_solution_is_fully_filled(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         result = CodewordsGenerator(seed=0).generate()
         for row in result["solution"]:
             for v in row:
                 assert isinstance(v, int) and 1 <= v <= 9
 
     def test_given_mappings_is_subset_of_codebook(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         result = CodewordsGenerator(seed=7, difficulty="medium").generate()
         codebook = result["codebook"]
         given = result["given_mappings"]
@@ -119,7 +119,7 @@ class TestCodewordsGenerator:
             assert codebook[letter] == digit
 
     def test_given_mappings_count_respects_difficulty(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         _GIVEN_MAPPINGS_COUNT = {"easy": 5, "medium": 3, "hard": 2, "expert": 1}
         for diff, expected_count in _GIVEN_MAPPINGS_COUNT.items():
             result = CodewordsGenerator(seed=0, difficulty=diff).generate()
@@ -129,7 +129,7 @@ class TestCodewordsGenerator:
             )
 
     def test_cancel_raises_runtime_error(self):
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
         flag = [True]  # list[bool] cancel flag — True means cancelled
         gen = CodewordsGenerator(seed=0)
         with pytest.raises(RuntimeError, match="Cancelled"):
@@ -144,12 +144,12 @@ class TestCodewordsMappingTechnique:
 
     def _make_working_grid(self, board: Board, meta: VariantMetadata):
         """Instantiate _WorkingGrid via the private API."""
-        from richards_sudoku.services.difficulty_se import _WorkingGrid
+        from sudoku_inator.services.difficulty_se import _WorkingGrid
         return _WorkingGrid(board, meta)
 
     def test_technique_fires_and_sets_value(self):
         """All candidates for digit 1 are singletons {1} → technique sets them."""
-        from richards_sudoku.services.difficulty_se import _CodewordsMapping
+        from sudoku_inator.services.difficulty_se import _CodewordsMapping
         meta = _codewords_meta()
         board = _empty_codewords_board()
         # Pre-fill all cells except those in row 0 with something non-1
@@ -170,7 +170,7 @@ class TestCodewordsMappingTechnique:
 
     def test_technique_does_not_fire_when_multiple_candidates(self):
         """If any cell bearing digit 1 has {1,2}, technique must NOT fire for digit 1."""
-        from richards_sudoku.services.difficulty_se import _CodewordsMapping
+        from sudoku_inator.services.difficulty_se import _CodewordsMapping
         meta = _codewords_meta()
         board = _empty_codewords_board()
         wg = self._make_working_grid(board, meta)
@@ -194,8 +194,8 @@ class TestCodewordsMappingTechnique:
 
     def test_technique_skips_non_codewords_variant(self):
         """_CodewordsMapping returns False immediately for non-Codewords grids."""
-        from richards_sudoku.services.difficulty_se import _CodewordsMapping
-        from richards_sudoku.services.difficulty_se import _WorkingGrid
+        from sudoku_inator.services.difficulty_se import _CodewordsMapping
+        from sudoku_inator.services.difficulty_se import _WorkingGrid
         meta = VariantMetadata.standard_9x9()
         board = Board(size=9, variant=Variant.STANDARD)
         wg = _WorkingGrid(board, meta)
@@ -378,7 +378,7 @@ class TestCodewordsUI:
 
     def test_codebook_dock_hidden_for_standard(self, qtbot):
         """Codebook dock is hidden when variant is not CODEWORDS."""
-        from richards_sudoku.main import MainWindow
+        from sudoku_inator.main import MainWindow
 
         win = MainWindow()
         qtbot.addWidget(win)
@@ -389,7 +389,7 @@ class TestCodewordsUI:
 
     def test_codebook_dock_shown_for_codewords(self, qtbot):
         """Codebook dock is un-hidden when variant is CODEWORDS."""
-        from richards_sudoku.main import MainWindow
+        from sudoku_inator.main import MainWindow
 
         win = MainWindow()
         qtbot.addWidget(win)
@@ -398,9 +398,9 @@ class TestCodewordsUI:
 
     def test_show_candidate_digit_maps_to_letter_via_codebook(self, qtbot):
         """hint(show_candidate) adds a solution digit that maps to a letter A–I."""
-        from richards_sudoku.controller.game_controller import GameController
-        from richards_sudoku.solver.variant_generators import CodewordsGenerator
-        from richards_sudoku.ui.grid_widget import SudokuGridWidget
+        from sudoku_inator.controller.game_controller import GameController
+        from sudoku_inator.solver.variant_generators import CodewordsGenerator
+        from sudoku_inator.ui.grid_widget import SudokuGridWidget
 
         gen = CodewordsGenerator(seed=7, difficulty="easy").generate()
         codebook = gen["codebook"]
@@ -449,7 +449,7 @@ class TestCodewordsUI:
         because no unit has exactly one empty cell, yet _CodewordsMapping (weight 1.3)
         fires because all cells containing digit 1 as a candidate are singletons {1}.
         """
-        from richards_sudoku.services.difficulty_se import (
+        from sudoku_inator.services.difficulty_se import (
             _CodewordsMapping,
             _LastValue,
             _WorkingGrid,

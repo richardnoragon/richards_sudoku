@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from richards_sudoku.services.text_format import (
+from sudoku_inator.services.text_format import (
     export_puzzle_pack,
     export_text,
     import_puzzle_pack,

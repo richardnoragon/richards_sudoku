@@ -1,14 +1,23 @@
 # Release Process
 
+## Alpha, Beta, and release
+
+The current development stage is **pre-alpha**, using [alpha.md](alpha.md).
+Alpha requires all seven [readiness criteria](PROJECT_STATUS.md#alpha-readiness),
+including a working primary workflow and independent developer handoff.
+Beta follows with evidence that ordinary users can reliably use the agreed scope.
+RC and final publication then follow this process and the release checklist.
+Neither Alpha attainment nor a package version replaces publication approval.
+A stage change must include candidate-specific evidence and an updated project status.
+
 This document defines the release process for Sudoku-inator and provides a consistent, repeatable path from feature completion to published release.
 
 ## Current release status
 
-The project currently reflects a stable, verified beta/release-candidate status for the implemented feature set.
-
-- Validation baseline: `QT_QPA_PLATFORM=offscreen python3 -m pytest -q`
-- Result: `583 passed, 2 warnings in 2.92s`
-- Release posture: current roadmap items are operationally stable, with remaining work focused on product polish, future content, or optional expansion rather than core defect repair.
+The package version is 0.1.0. Core and extended-variant foundations exist, but
+independent handoff, manual acceptance, and release approval remain open. See [PROJECT_STATUS.md](PROJECT_STATUS.md),
+[TESTING.md](TESTING.md#latest-local-validation), and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+Local automated checks are evidence for this working tree, not approval to publish.
 
 ## Feature freeze
 
@@ -46,7 +55,7 @@ A release candidate (RC) is created after the feature freeze begins and the code
 ### RC process
 
 1. Create a release branch from the current stable development state.
-2. Bump the version to the release-candidate tag or prerelease number.
+2. Set a Python-compatible prerelease version (for example `0.2.0rc1`) following the [versioning policy](Versioning%20%20Standard%20%20Policy.md).
 3. Run the full validation set, including regression and smoke checks.
 4. Document known limitations and explicitly tracked issues.
 5. Publish the RC for trial use and feedback.

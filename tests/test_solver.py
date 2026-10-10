@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from richards_sudoku.model.types import VariantMetadata
-from richards_sudoku.solver import (
+from sudoku_inator.model.types import VariantMetadata
+from sudoku_inator.solver import (
     Grid,
     generate_puzzle,
     generate_solution,
@@ -14,7 +14,7 @@ from richards_sudoku.solver import (
     solve,
     validate,
 )
-from richards_sudoku.solver.generator import GenerationCancelled, check_unique
+from sudoku_inator.solver.generator import GenerationCancelled, check_unique
 
 # ---------------------------------------------------------------------------
 # Helpers

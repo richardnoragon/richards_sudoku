@@ -20,8 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-sudoku-inator = "richards_sudoku.main:main"
-richards-sudoku = "richards_sudoku.main:main"
+sudoku-inator = "sudoku_inator.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -46,7 +45,7 @@ select = ["E9", "F63", "F7", "F82"]
 
 [tool.mypy]
 python_version = "3.13"
-files = ["src/richards_sudoku/model"]
+files = ["src/sudoku_inator/model"]
 ignore_missing_imports = true
 warn_unused_ignores = true
 pretty = true

@@ -8,7 +8,25 @@ Sync Impact Report
 - Follow-up TODOs: none
 -->
 
-# richards_sudoku Constitution
+# Sudoku-inator Constitution
+
+## Development maturity alignment
+
+Use [the Alpha standard](../../alpha.md) and the
+[readiness checklist](../../PROJECT_STATUS.md#alpha-readiness) for milestone claims.
+Current stage is pre-alpha. Working primary workflows, stable architecture, and
+independent developer handoff require evidence; historical batch names do not
+certify Alpha or Beta. This alignment does not record ratification or publication approval.
+
+Editorial alignment reviewed 2026-09-29: the public name is Sudoku-inator; the
+Python package remains `richards_sudoku`. This tooling constitution shares the
+principles in [the project constitution](../../speckit.constitution) and its appendices.
+[Project status](../../PROJECT_STATUS.md) records implementation gaps; CI scope is
+specified by [the enforcement plan](../../CI%20Enforcement%20Plan.md).
+The ratification/version record below is unchanged by this documentation clarification.
+
+Current naming (2026-10-10): Python package `sudoku_inator`; the earlier naming
+note above is historical. See [REBRANDING.md](../../REBRANDING.md).
 
 ## Core Principles
 
@@ -28,13 +46,13 @@ The project MUST define and preserve a release baseline: versioned features, cha
 The codebase MUST prefer explicit, readable implementations over cleverness. Shared contracts, model boundaries, and naming MUST be consistent across solver, persistence, and UI layers. Complexity MUST be justified by a concrete requirement; otherwise, the simpler and more testable solution wins.
 
 ## Project Constraints
-The project is a Python 3.13 desktop application built around PyQt6 and a solver-centric architecture. The repository MUST keep its current library boundaries explicit: model, services, persistence, UI, and solver responsibilities remain separate, and cross-layer coupling is not allowed unless required by a verified design need. Save and state interactions MUST remain deterministic and recoverable; user progress MUST not be lost silently. All generator, solver, and difficulty logic MUST remain reproducible under headless CI conditions.
+The project is a Python 3.13+ desktop application built around PyQt6 and a solver-centric architecture. The repository MUST keep its current library boundaries explicit: model, services, persistence, UI, and solver responsibilities remain separate, and cross-layer coupling is not allowed unless required by a verified design need. Save and state interactions MUST remain deterministic and recoverable; user progress MUST not be lost silently. All generator, solver, and difficulty logic MUST remain reproducible under headless CI conditions.
 
 ## Development Workflow
 All feature work MUST follow the Spec Kit flow: generate or update requirements, plan, and task artifacts before implementation when the change is not a trivial fix. Each task or story MUST define testable outcomes, and implementation MUST stop when validation evidence is missing. Reviews MUST confirm compliance with variant rules, accessibility requirements, release readiness, and repository quality gates before merge. Changes that affect puzzle correctness, persistence, or UX MUST include the relevant validation evidence in the review record.
 
 ## Governance
-This Constitution governs all product, engineering, and release decisions for richards_sudoku. It supersedes informal practices where conflict exists. Any amendment MUST be proposed with a concrete governance reason, the updated principle or rule, and the migration or compatibility impact. Changes to rules or principles require a PR that includes the revised text, rationale, and evidence that the project remains compliant with the existing release gates.
+This Constitution governs all product, engineering, and release decisions for sudoku-inator. It supersedes informal practices where conflict exists. Any amendment MUST be proposed with a concrete governance reason, the updated principle or rule, and the migration or compatibility impact. Changes to rules or principles require a PR that includes the revised text, rationale, and evidence that the project remains compliant with the existing release gates.
 
 The project MUST use semantic versioning for constitutional changes:
 - MAJOR: backward-incompatible governance or rule changes;

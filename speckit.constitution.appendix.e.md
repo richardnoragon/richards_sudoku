@@ -1,69 +1,61 @@
----
+# Appendix E — Serialization schema and migration rules
 
-> **Governance cross-references:** Parent: [speckit.constitution](speckit.constitution) §2.6 & §6 | Lifecycle: [C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md) | Enforced by: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) §6 | CI checks: [CI Enforcement Plan](CI%20Enforcement%20Plan.md) | Migration history: [MIGRATIONS.md](MIGRATIONS.md) | Related: [Appendix A](speckit.constitution.appendix.a.md) §A5 (serialization discipline)
+## Alpha evidence
 
-# **Appendix E — Serialization Schema & Migration Rules**
+Apply [alpha.md](alpha.md) alongside the requirements in this appendix.
+Demonstrate save/resume and failure recovery. Track DOC-03 session restoration
+and DOC-06 unsaved transitions; schema compatibility alone is insufficient.
 
-## **E1. Schema Versioning**
-- All save files include:
-  ```json
-  {
-    "schema_version": <int>,
-    ...
-  }
-  ```
-- Increment schema version when:
-  - Adding fields  
-  - Changing field semantics  
-  - Changing variant descriptors  
+Parent: [constitution](speckit.constitution) §2.6. Related:
+[Appendix A](speckit.constitution.appendix.a.md), [migration history](MIGRATIONS.md),
+[release checklist](RELEASE_CHECKLIST.md), [lifecycle](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md).
 
-## **E2. Backward Compatibility**
-- Loaders must:
-  - Accept all previous schema versions  
-  - Apply migrations automatically  
-  - Reject malformed payloads safely  
+## E1. Schema versioning
 
-## **E3. Required Fields**
-Every save file must contain:
+Save files use the integer key `version`; the current writer emits `2`.
+The application version in `pyproject.toml` is independent of the save schema.
+Breaking field semantics or incompatible structures require a schema version change.
+Compatible optional fields may retain the version when loader defaults and tests
+are documented in MIGRATIONS.md, as implemented for `hint_limit`.
 
-| Field | Description |
-|-------|-------------|
-| `schema_version` | integer |
-| `variant` | string identifier |
-| `grid` | serialized grid state |
-| `pencil_marks` | optional |
-| `stats` | moves, hints, timer |
-| `se_score` | optional |
-| `se_label` | optional |
+## E2. Backward compatibility
 
-## **E4. Migration Table**
-Each schema version must define:
+The current loader accepts versions 1 and 2. It supplies missing SE fields and
+hint-limit defaults, and maps the legacy variant name `extended` to `1to25`.
+Future versions and missing/invalid version fields are rejected. Future schema
+changes must document which prior versions remain readable and how to recover.
 
-- Added fields  
-- Removed fields  
-- Default values for missing fields  
-- Transformation rules  
+## E3. Fields
 
-Example:
+The writer emits `version`, `board`, `variant_meta`, `solution`, `timer`, `stats`,
+`se_score`, `se_label`, `hint_limit`, and optional `original_puzzle`. Candidate marks
+are stored inside board cells; `board.codebook_hypotheses` stores player mappings. Variant layouts and constraints are stored in `variant_meta`.
+[MIGRATIONS.md](MIGRATIONS.md#current-format-version-2) defines required fields and defaults.
 
-| Version | Change |
-|---------|--------|
-| 3 → 4 | Added `se_score`, `se_label` |
-| 4 → 5 | Added `variant_settings` block |
-| 5 → 6 | Normalized region descriptors |
+History and theme/font preferences are outside the current save format. Kakuro
+clue positions are derived on load; they are not persisted.
 
-## **E5. Validation Rules**
-- Reject if:
-  - Grid size mismatches variant  
-  - Region map invalid  
-  - Pencil marks contain invalid digits  
-  - Stats contain negative values  
+## E4. Migration table
 
-## **E6. Security**
-- No executable content permitted in payloads.
-- No external references (URLs, file paths).
-- All strings must be sanitized.
+| Transition | Implemented behavior |
+| --- | --- |
+| 1 → 2 | Missing SE score/label default to 0.0 / Unknown; next save writes version 2 |
+| Compatible version 2 additions | Default hint limit 3; original-clue fallback; empty hypotheses; legacy variant rename; variant constraints |
 
----
+Record every future format change in MIGRATIONS.md with its transformations,
+defaults, compatibility policy, validation, and recovery steps.
 
-> **See also:** [Appendix A](speckit.constitution.appendix.a.md) — Code Quality Standards (§A5 Serialization Discipline) | [Appendix B](speckit.constitution.appendix.b.md) — Testing Matrix (persistence tests) | [Appendix C](speckit.constitution.appendix.c.md) — UX Interaction Model (§C5 Persistence UX) | [Appendix D](speckit.constitution.appendix.d.md) — Performance Budgets (§D3 Persistence Latency) | [MIGRATIONS.md](MIGRATIONS.md) — Schema Migration History | [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) §6
+## E5. Validation requirements
+
+Loaders must reject malformed payloads and invalid board/variant metadata safely.
+Current checks live in model constructors, `_validate_variant_constraints`, and
+`_validate_session`; they cover ranges, dimensions, coordinates, session counters,
+hypotheses, and original-clue consistency. These checks are not a complete external
+JSON Schema validator or a claim that every malformed payload is covered.
+Add focused regression tests whenever a validation gap is fixed.
+
+## E6. Safe persistence
+
+Payloads are JSON data and must never execute code or trigger external resource
+loads. Use temporary sibling files and atomic replacement for saves. Preserve a
+previous-save backup and document recovery. See the [user guide](USER_GUIDE.md).

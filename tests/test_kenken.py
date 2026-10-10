@@ -13,15 +13,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from richards_sudoku.model.types import Board, Cell, Variant, VariantMetadata
-from richards_sudoku.services.difficulty_se import (
+from sudoku_inator.model.types import Board, Cell, Variant, VariantMetadata
+from sudoku_inator.services.difficulty_se import (
     _KenKenCage,
     _KillerCage,
     _WorkingGrid,
     grade,
 )
-from richards_sudoku.services.text_format import export_text, import_text
-from richards_sudoku.solver.variant_generators import KenKenCagePartitioner
+from sudoku_inator.services.text_format import export_text, import_text
+from sudoku_inator.solver.variant_generators import KenKenCagePartitioner
 
 
 # ---------------------------------------------------------------------------
@@ -295,7 +295,7 @@ class TestKenKenCageTechnique:
 class TestKenKenIsComplete:
 
     def _make_controller(self, solution: list[list[int]], cages: list[dict]) -> object:
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         size = len(solution)
         meta = _kenken_meta(size, cages)
         board = Board(size=size, variant=Variant.KENKEN)
@@ -360,7 +360,7 @@ class TestKenKenIsComplete:
         assert ctrl.is_complete is True
 
     def test_empty_cell_returns_false(self) -> None:
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         sol = _solved_4x4()
         cages = [{"cells": [[r, c]], "op": "+", "target": sol[r][c]} for r in range(4) for c in range(4)]
         meta = _kenken_meta(4, cages)
@@ -397,13 +397,13 @@ class TestKenKenPersistence:
         ]
 
     def test_valid_meta_does_not_raise(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         cages = self._full_single_cages(4)
         meta = self._meta(4, cages)
         _validate_variant_constraints(meta)  # must not raise
 
     def test_missing_cages_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         meta = VariantMetadata(
             name=Variant.KENKEN,
             size=4,
@@ -415,7 +415,7 @@ class TestKenKenPersistence:
             _validate_variant_constraints(meta)
 
     def test_empty_cages_list_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         meta = VariantMetadata(
             name=Variant.KENKEN,
             size=4,
@@ -427,7 +427,7 @@ class TestKenKenPersistence:
             _validate_variant_constraints(meta)
 
     def test_cage_missing_op_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         cages = self._full_single_cages(4)
         del cages[0]["op"]
         meta = self._meta(4, cages)
@@ -435,7 +435,7 @@ class TestKenKenPersistence:
             _validate_variant_constraints(meta)
 
     def test_cage_missing_target_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         cages = self._full_single_cages(4)
         del cages[0]["target"]
         meta = self._meta(4, cages)
@@ -443,7 +443,7 @@ class TestKenKenPersistence:
             _validate_variant_constraints(meta)
 
     def test_invalid_op_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         cages = self._full_single_cages(4)
         cages[0]["op"] = "^"  # not a valid op
         meta = self._meta(4, cages)
@@ -451,7 +451,7 @@ class TestKenKenPersistence:
             _validate_variant_constraints(meta)
 
     def test_cell_overlap_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         cages = self._full_single_cages(4)
         # Duplicate cell (0,0) in a second cage
         cages.append({"cells": [[0, 0]], "op": "+", "target": 1})
@@ -460,7 +460,7 @@ class TestKenKenPersistence:
             _validate_variant_constraints(meta)
 
     def test_incomplete_coverage_raises(self) -> None:
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         # Only put 15 cages (missing one cell)
         cages = self._full_single_cages(4)[:-1]
         meta = self._meta(4, cages)

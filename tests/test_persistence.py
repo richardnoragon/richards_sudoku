@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from richards_sudoku.model.types import Board, Cell, Move, Variant, VariantMetadata
-from richards_sudoku.persistence import (
+from sudoku_inator.model.types import Board, Cell, Move, Variant, VariantMetadata
+from sudoku_inator.persistence import (
     PersistenceError,
     SaveState,
     backup_path_for,
@@ -16,8 +16,8 @@ from richards_sudoku.persistence import (
     restore_backup,
     save,
 )
-from richards_sudoku.services.stats import GameStats
-from richards_sudoku.services.timer import GameTimer
+from sudoku_inator.services.stats import GameStats
+from sudoku_inator.services.timer import GameTimer
 
 
 # ---------------------------------------------------------------------------

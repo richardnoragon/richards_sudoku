@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from richards_sudoku.model.types import Board, Variant, VariantMetadata
-from richards_sudoku.services.difficulty_se import (
+from sudoku_inator.model.types import Board, Variant, VariantMetadata
+from sudoku_inator.services.difficulty_se import (
     _AlignedPairExclusion,
     _BUG,
     _Claiming,

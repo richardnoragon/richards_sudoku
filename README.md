@@ -1,109 +1,131 @@
 # Sudoku-inator
 
-Sudoku-inator is a Python + PyQt Sudoku app focused on rich variant support,
-playability, and engineering reliability.
+A Python + PyQt6 desktop puzzle app with eight registered variants, local saves,
+pencil marks, hints, undo/redo, and SE-style difficulty grading.
+Formerly known as Richards Sudoku (`richards_sudoku`). The distribution and command
+are `sudoku-inator`; the Python package is `sudoku_inator`. See [the rebranding record](REBRANDING.md).
 
-> The internal Python package name remains `richards_sudoku` for compatibility with the existing codebase and tooling, while the public-facing product name is Sudoku-inator.
+## Current status
 
-## Current project status
+Application version: **0.1.0**. Development stage: **pre-alpha; Alpha criteria remain open**.
+[alpha.md](alpha.md) defines the developer handoff and end-to-end workflow standard.
+Core and extended-variant foundations are implemented.
+The workflow fixes have regression coverage; independent handoff and manual
+release validation remain open. See
+[project status](PROJECT_STATUS.md) for verified behavior and known gaps.
 
-This repository is currently in a stable beta-to-release-candidate state for the implemented feature set. The core gameplay, persistence, variant support, and release documentation are in place and have been validated against the repo’s real test suite.
+| Variant | Board size |
+| --- | --- |
+| Standard, Jigsaw, Str8ts, Killer, Codewords, Kakuro | 9×9 |
+| KenKen | 4×4, 6×6, 9×9 |
+| 1–25 | 25×25; use F4 / Enter Value for values 10–25 |
 
-Verified baseline:
+## Install and run
 
-- `QT_QPA_PLATFORM=offscreen python3 -m pytest -q`
-- Result: `583 passed, 2 warnings in 2.92s`
-- Supported variants: Standard Sudoku, Jigsaw, Str8ts, Killer, 1to25, Codewords, KenKen, and Kakuro
-- Runtime baseline: Python 3.13+, PyQt6 desktop app
+Requires Python 3.13+ and a desktop environment. PyQt6 >=6.10 is installed as a dependency.
 
-## What You Can Play
+Clone the repository and enter its directory:
 
-- Standard Sudoku (9x9)
-- Jigsaw
-- Str8ts
-- Killer
-- 1to25
-- Codewords
-- KenKen
-- Kakuro
+```bash
+git clone https://github.com/richardnoragon/sudoku-inator.git
+cd sudoku-inator
+```
 
-## Quick Start (Windows / macOS / Linux)
+Create a virtual environment:
 
-1. Create and activate a Python 3.13 environment.
-2. Install the project in editable mode with dev dependencies.
-3. Run the desktop app.
+```bash
+python -m venv .venv
+```
+
+If your Linux Python reports that `ensurepip` is unavailable, install the matching
+Python venv package supplied by your distribution, then repeat this command.
+
+Activate with `source .venv/bin/activate` on Linux/macOS, or
+`.venv\Scripts\Activate.ps1` in Windows PowerShell. Then run:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -e .[dev]
+python -m pip install -e '.[dev]'
 sudoku-inator
 ```
 
-## First-Time User Onboarding
+Use `sudoku-inator`; the former command was retired in the full rebrand.
+For play without developer tools, install with `python -m pip install -e .`.
 
-New users should start with the core workflow below:
+## Docker testing
 
-1. Launch Sudoku-inator and choose a variant from the board setup flow.
-2. Start with a familiar grid such as Standard Sudoku or Jigsaw before moving to more advanced layouts.
-3. Use the status bar and hint guidance to understand available moves and puzzle progress.
-4. Save regularly and keep the project backup guidance in mind when working with local game files.
-
-For a deeper walkthrough, see [USER_GUIDE.md](USER_GUIDE.md).
-
-## Contributing
-
-We welcome bug reports, improvements, and variant work. For the contributor workflow, setup steps, testing expectations, and release checklist, see [CONTRIBUTING.md](CONTRIBUTING.md) and [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
-
-## Release Cadence and Roadmap
-
-The project follows a milestone-based release model:
-
-- stability and beta-grade reliability come first,
-- variant maturity and validation follow,
-- product polish and onboarding improve the user experience,
-- extensibility and platform growth remain the longer-term architecture goal.
-
-The active roadmap is tracked in [ROADMAP.md](ROADMAP.md), and release notes are maintained in [CHANGELOG.md](CHANGELOG.md).
-
-## Phase 0 UX Improvements
-
-The app has completed the initial UX/accessibility foundation for the current release cycle:
-
-- Clearer selected-cell feedback and stronger status messaging in the board UI.
-- Keyboard-first guidance surfaced in the status bar for navigation and input actions.
-- Improved accessibility hooks through focusable controls and meaningful labels.
-- More readable action descriptions and tooltips for common gameplay tasks.
-- A consistent design direction aligned with the product UX spec for future variant work.
-
-## Design Direction
-
-See [UX_DESIGN_SPEC.md](UX_DESIGN_SPEC.md) for the current product-facing design direction, user journeys, information architecture, accessibility requirements, and success criteria.
-
-## Run Tests
+The Dockerfile packages the checked-out source (currently version 0.1.0).
+There is no tagged stable release yet, and release validation remains open.
+It uses the Python 3.13 line used by CI; `--pull` refreshes its base image.
 
 ```bash
-QT_QPA_PLATFORM=offscreen pytest -q
+docker build --pull -t sudoku-inator:local .
 ```
 
-The PyQt6 test backend is configured explicitly for headless CI/local runs so the Qt plugin does not fall back to the incompatible PySide6 bindings.
+### Desktop play on Linux
 
-## Quality Gates (Local)
-
-Run the same checks used by CI before opening a PR:
+Requires a local X11 session, or Wayland with XWayland, and a valid Xauthority
+file. Run from a terminal in your desktop session:
 
 ```bash
-ruff check src
-mypy
-pytest -q
+mkdir -p docker-saves
+export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+test -f "$XAUTHORITY" && docker run --rm --init \
+  --user "$(id -u):$(id -g)" \
+  --hostname "$(hostname)" \
+  -e DISPLAY -e XAUTHORITY=/tmp/host.xauth -e HOME=/tmp \
+  -e QT_QPA_PLATFORM=xcb -e QT_X11_NO_MITSHM=1 \
+  --mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,readonly \
+  --mount "type=bind,src=$XAUTHORITY,dst=/tmp/host.xauth,readonly" \
+  --mount "type=bind,src=$PWD/docker-saves,dst=/data" \
+  sudoku-inator:local
 ```
 
-## Project Tracking
+Save games under `/data` in the file dialog to keep them in `docker-saves`
+after the container closes. If the command does not start because the
+Xauthority file is missing, set `XAUTHORITY` to your desktop session's cookie
+file. Native desktop forwarding with these commands is Linux-only.
 
-- Todo/status source: `speckit.tasks`
-- Milestone/status overview: `milestone_roadmap.md`
-- Release gate: `RELEASE_CHECKLIST.md`
-- Phase 1 MVP baseline: complete in this branch
-- Phase 2 Beta baseline: complete in this branch
-- Phase 3 persistence baseline: complete in this branch
-- Phase 4 extended-variant baseline: complete in this branch
-- SE difficulty grader advanced techniques: complete in this branch
+### Automated tests
+
+The separate test target runs without a display server and includes the
+development dependencies and test suite:
+
+```bash
+docker build --pull --target test -t sudoku-inator:test .
+docker run --rm --init sudoku-inator:test
+```
+
+Rebuild after source changes. Neither target mounts your source tree.
+
+## Playing
+
+Use **File → New Game** to choose a variant, difficulty, and hint allowance.
+Click a cell, enter digits (or **F4** for any value up to 25), and use **P** for
+pencil mode or **H** for the selected hint mode.
+Use **File → Save** and **File → Open** to save and resume JSON games.
+See the [user guide](USER_GUIDE.md) for controls and current limitations.
+
+## Development checks
+
+```bash
+python -m ruff check src
+python -m mypy
+```
+
+On Linux/macOS:
+
+```bash
+QT_QPA_PLATFORM=offscreen python -m pytest -q
+```
+
+See [TESTING.md](TESTING.md) for PowerShell commands, current results, and CI scope.
+
+## Documentation
+
+- [Documentation index and authority](DOCUMENTATION.md)
+- [Architecture](ARCHITECTURE.md) and [decisions](DECISIONS.md)
+- [Requirements](prd.md) and [UX direction](UX_DESIGN_SPEC.md)
+- [Roadmap](ROADMAP.md), [implementation issues](IMPLEMENTATION_ISSUES.md), and [tasks](speckit.tasks)
+- [Contributing](CONTRIBUTING.md), [release process](RELEASE_PROCESS.md), and [release checklist](RELEASE_CHECKLIST.md)
+- [Changelog](CHANGELOG.md), [save migrations](MIGRATIONS.md), and [security policy](SECURITY.md)

@@ -1,8 +1,16 @@
-Here’s a **Governance Review Template** you can use to periodically audit compliance with standards, policies, and lifecycle practices. It’s structured for transparency, traceability, and accountability.
-
----
-
 # **📄 Governance Review Template**
+
+## Development-stage evidence
+
+When applying this template, record the candidate revision, intended stage, and
+linked evidence against [alpha.md](alpha.md). Copy the actual assessment from
+[PROJECT_STATUS.md](PROJECT_STATUS.md); unfilled fields and version numbers do not
+prove Alpha, Beta, or release readiness.
+
+Reusable template; fill in owners, dates, applicable checks, and evidence for each use.
+This is not a completed project audit. The [versioning policy](Versioning%20%20Standard%20%20Policy.md)
+and [CI enforcement plan](CI%20Enforcement%20Plan.md) define the current project scope.
+API/container checks are conditional; automated version and changelog checks remain future work.
 
 ## 1. Review Context
 - Standard or policy under review (e.g., **Versioning Policy**).  
@@ -77,7 +85,3 @@ Here’s a **Governance Review Template** you can use to periodically audit comp
 - Record updates from each governance cycle.  
 
 ---
-
-⚡ This template ensures governance reviews are **structured, evidence‑based, and actionable**, preventing drift and reinforcing lifecycle integrity.  
-
-Would you like me to also draft a **review report template** so each completed governance review can be formally documented and archived?

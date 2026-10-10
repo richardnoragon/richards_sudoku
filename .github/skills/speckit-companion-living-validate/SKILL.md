@@ -40,13 +40,16 @@ Add `--json` when a caller needs the machine-readable object rather than the lis
 | Code | Severity | Raised when |
 |---|---|---|
 | `requirement-without-scenario` | warning | A requirement states a rule and never says how anyone would know it held. |
+| `requirement-bundles-rules` | warning | A requirement states more than 4 SHALL, MUST or SHOULD sentences under one heading. Split it: one requirement per rule, each with its own heading and scenario. |
+| `requirement-too-wordy` | warning | A requirement takes more than 120 words to state its rule. Cut it to the rule and the one reason that stops someone breaking it. |
 | `scenario-missing-half` | error | A scenario has a condition and no outcome, or an outcome and no condition. The keywords are recognised with or without emphasis, so `- WHEN …` counts exactly as `- **WHEN** …` does. |
 | `duplicate-requirement` | error | Two requirements in one capability share a heading, which is the join key fold-back and coverage use. |
 | `unknown-capability` | error | A delta block is marked for a capability the registry does not list. |
 | `delta-heading-not-found` | warning | A MODIFIED or REMOVED entry names a heading the target spec does not carry. The fold promotes an unmatched modification into an addition, so this is a defined outcome rather than damage. |
 | `unmatched-touches-glob` | warning | A file marker names a pattern matching nothing on disk. |
-| `requirements-outside-capability` | warning | Every file marker names code the capability does not claim, so nothing resolves for that behaviour. |
-| `capability-claims-undescribed-code` | warning | The capability claims code no requirement describes, so a change there is briefed with nothing. |
+
+- `requirements-outside-capability` — every file marker names code the capability does not claim, so nothing resolves for that behaviour.
+- `capability-claims-undescribed-code` — the capability claims code no requirement describes, so a change there is briefed with nothing.
 | `unbalanced-fence` | warning | A code fence is opened and never closed, so everything after it is invisible to every reader. |
 
 Severity answers exactly one question: whether the fold stops. An error means the durable record would be damaged; a warning means it would be untidy.

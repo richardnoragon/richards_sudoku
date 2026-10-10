@@ -1,7 +1,18 @@
+> Status: these are release requirements. Current implementation and gaps are in
+> [PROJECT_STATUS.md](PROJECT_STATUS.md); automation coverage is in
+> [the CI enforcement plan](CI%20Enforcement%20Plan.md).
+
+---
 
 > **Governance cross-references:** Parent: [speckit.constitution](speckit.constitution) §3 & §6 | Lifecycle: [C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md) | Enforced by: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) §3 | CI checks: [CI Enforcement Plan](CI%20Enforcement%20Plan.md) | Related: [Appendix A](speckit.constitution.appendix.a.md) (quality standards), [Appendix D](speckit.constitution.appendix.d.md) (performance budgets)
 
 # **Appendix B — Testing Matrix & Fixtures**
+
+## Alpha evidence
+
+Apply [alpha.md](alpha.md) alongside the requirements in this appendix.
+Verify major primary workflows and regression checks for the open DOC issues;
+include the independent handoff evidence alongside automated results.
 
 ## **B1. Coverage Matrix**
 Every release must satisfy the following coverage:

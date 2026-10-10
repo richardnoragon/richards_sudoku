@@ -1,8 +1,16 @@
-Here’s a **Migration Plan Template** you can adopt across your repositories to standardize how teams transition to new policies, standards, or technologies. It’s written in the same governance style as your versioning policy, so it integrates seamlessly.
-
----
-
 # **📄 Migration Plan Template**
+
+## Development-stage evidence
+
+When applying this template, record the candidate revision, intended stage, and
+linked evidence against [alpha.md](alpha.md). Copy the actual assessment from
+[PROJECT_STATUS.md](PROJECT_STATUS.md); unfilled fields and version numbers do not
+prove Alpha, Beta, or release readiness.
+
+Reusable template; fill in owners, dates, applicable checks, and evidence for each use.
+This is not a completed project audit. The [versioning policy](Versioning%20%20Standard%20%20Policy.md)
+and [CI enforcement plan](CI%20Enforcement%20Plan.md) define the current project scope.
+API/container checks are conditional; automated version and changelog checks remain future work.
 
 ## 1. Standard
 Link to the **policy or standard** being adopted (e.g., Versioning Policy).
@@ -83,7 +91,3 @@ Link to the **policy or standard** being adopted (e.g., Versioning Policy).
 - Track revisions to this migration plan.
 
 ---
-
-⚡ This template ensures migrations are **predictable, traceable, and enforceable**.  
-
-Would you like me to also generate a **rollout plan template** so you can manage phased adoption across multiple teams and environments?

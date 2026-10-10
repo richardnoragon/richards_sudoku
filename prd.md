@@ -1,5 +1,30 @@
 # Product Requirements Document (PRD): Sudoku-inator
 
+## Alpha workflow contract (2026-10-01)
+
+Supported hints are Auto, Reveal, Eliminate, Naked Single, and Candidate. Candidate
+is free; other successful invocations spend one hint. Multi-reveal and technique
+walkthroughs are future scope. Text exchange transfers clues and rules without a
+solution or session notes; JSON preserves session data. History remains session-local.
+Codewords hypotheses are separate player notes with undo/redo and JSON persistence.
+F4 accepts the full symbol range. See USER_GUIDE.md for the current interaction contract.
+
+## Alpha alignment
+
+[alpha.md](alpha.md#sudoku-inator-alpha-scope) defines the current Alpha scope.
+Primary advertised workflows must function end-to-end before Alpha; the broader
+requirements below remain targets where implementation is incomplete. Current
+stage is pre-alpha; DOC-09 also requires developer handoff and architecture review.
+
+## Status and scope
+
+This document states product requirements. The implemented baseline and exceptions
+are recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md); acceptance work is in
+[prd_checklist.md](prd_checklist.md). All eight variants have automated lifecycle coverage. 1–25 entry, Codewords
+hypotheses, import/export, and unsaved-progress safeguards are implemented; broader
+accessibility and independent/manual assessment remain open.
+
+
 ## 1. Overview
 A Python application that allows users to **create, solve, and share Sudoku puzzles** across multiple variants. The system supports game persistence (load/save), user assistance features (hints, pencil marks), and performance tracking (time, moves, hint usage).
 
@@ -10,7 +35,7 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 ### 2.1 Game Management
 - Load existing Sudoku games from local storage.
 - Save current progress to local storage.
-- Create new Sudoku puzzles (randomly generated or user‑defined).
+- Create generated puzzles. User-defined puzzle editing remains future scope.
 - Import/export puzzles for sharing with others (e.g., JSON, text, or custom format).
 
 ### 2.2 Variants
@@ -32,7 +57,7 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 - Pencil‑in notes (candidate numbers per cell).
 - Highlight conflicts (duplicate numbers in row/column/region).
 - Undo/redo moves.
-- **Difficulty levels** (Easy, Medium, Hard, Expert/Extreme) selectable at new game.
+- **Difficulty levels** (Easy, Medium, Hard, Expert) selectable at new game; SE grading uses Extreme for its highest category.
 - **SE difficulty rating**: automatic grading via SukakuExplainer‑style simulation; score (0–8.0) and category displayed in status bar at game start and after load.
 
 ### 2.4 Tracking & Analytics
@@ -64,7 +89,7 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 
 ### 3.3 Accessibility
 - Configurable color themes (light/dark mode).
-- Adjustable font sizes.
+- Adjustable font sizes (required; not yet exposed as a user setting).
 - Keyboard shortcuts for common actions.
 
 ---
@@ -97,7 +122,7 @@ A Python application that allows users to **create, solve, and share Sudoku puzz
 - Puzzle editor for custom rule sets.
 - Mobile‑friendly UI adaptation.
 - Integration with cloud storage for save files.
-- Advanced SE techniques: XY‑Wing, XYZ‑Wing, Unique Rectangles, BUG, Forcing Chains.
+- Further calibration of the implemented advanced SE techniques: XY-Wing, XYZ-Wing, Unique Rectangles, BUG, and Forcing Chains.
 
 ---
 

@@ -5,6 +5,12 @@
 
 # **Appendix A — Code Quality Standards**
 
+## Alpha evidence
+
+Apply [alpha.md](alpha.md) alongside the requirements in this appendix.
+Review settled module boundaries and extension contracts in DOC-09; record any
+expected major rewrite before declaring the architecture stable.
+
 ## **A1. Layer Boundaries**
 - The following layers are normative and must remain decoupled:  
   **Generation**, **Solving**, **UI**, **Persistence**, **Statistics**, **SE Difficulty Grading**.
@@ -13,10 +19,10 @@
 
 ## **A2. Interfaces & Contracts**
 - Public functions must be type‑hinted and validated.
-- All grid‑like structures must implement the shared `GridProtocol` (size, region map, candidates, set/get operations).
-- SE techniques must implement the `TechniqueProtocol`:
+- Grid interfaces must document size, regions, candidates, and mutation operations. Current code uses `Board`, `VariantMetadata`, and `_WorkingGrid`; no shared `GridProtocol` class is implemented.
+- SE techniques follow this structural contract (there is no named `TechniqueProtocol` class):
   - `name: str`
-  - `weight: int`
+  - `weight: float`
   - `apply(grid) -> bool`
 
 ## **A3. Readability & Maintainability**
@@ -33,9 +39,9 @@
 - Floating‑point operations must not influence solver correctness.
 
 ## **A5. Serialization Discipline**
-- Save format is versioned (`schema_version`).
+- Save format is versioned (`version`).
 - New fields require:
-  - Incremented schema version  
+  - A version increment for incompatible changes, or documented defaults for compatible optional additions (see Appendix E)
   - Backward‑compatible loader  
   - Migration entry in [Appendix E](speckit.constitution.appendix.e.md) and recorded in [MIGRATIONS.md](MIGRATIONS.md)  
 - Malformed payloads must fail safely.

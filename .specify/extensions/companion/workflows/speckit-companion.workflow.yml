@@ -65,9 +65,12 @@ steps:
       # "`small` names the *bar*, never the verdict"). This key read `small`
       # once, so no run ever matched it and every spec took the full default.
       simple:
-        # Folded path — less ceremony for a small change: skip the planning and
-        # tasking detour and move straight into implementation without the
-        # review-gate pauses.
+        # Folded path — the `specify` step above already wrote the lean plan.md
+        # and tasks.md and recorded plan and tasks as complete on a `simple`
+        # verdict (nodes/specify/_order.yml: `simple → folds: [plan, tasks]`).
+        # Running plan and tasks again here would overwrite those files and
+        # repeat the work the fold saved, so this route goes straight to
+        # implement, with no review-gate pauses.
         - id: simple-implement
           command: speckit.companion.implement
           integration: "{{ inputs.integration }}"

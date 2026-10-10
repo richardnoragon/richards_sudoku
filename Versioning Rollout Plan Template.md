@@ -1,8 +1,16 @@
-Here’s a **Rollout Plan Template** you can use to manage phased adoption of new standards, policies, or technologies across multiple teams and environments. It complements your versioning and migration templates, ensuring structured, predictable rollouts.
-
----
-
 # **📄 Rollout Plan Template**
+
+## Development-stage evidence
+
+When applying this template, record the candidate revision, intended stage, and
+linked evidence against [alpha.md](alpha.md). Copy the actual assessment from
+[PROJECT_STATUS.md](PROJECT_STATUS.md); unfilled fields and version numbers do not
+prove Alpha, Beta, or release readiness.
+
+Reusable template; fill in owners, dates, applicable checks, and evidence for each use.
+This is not a completed project audit. The [versioning policy](Versioning%20%20Standard%20%20Policy.md)
+and [CI enforcement plan](CI%20Enforcement%20Plan.md) define the current project scope.
+API/container checks are conditional; automated version and changelog checks remain future work.
 
 ## 1. Initiative
 - Name of the standard, policy, or technology being rolled out.  
@@ -91,7 +99,3 @@ Here’s a **Rollout Plan Template** you can use to manage phased adoption of ne
 - Track revisions to this rollout plan.  
 
 ---
-
-⚡ This template ensures rollouts are **phased, controlled, and transparent**, reducing risk while maximizing adoption success.  
-
-Would you like me to also draft a **enforcement checklist** so teams can verify compliance at each rollout stage?

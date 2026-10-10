@@ -1,4 +1,18 @@
-# **speckit Constitution: richards_sudoku (Refined)**
+# **speckit Constitution: sudoku-inator (Refined)**
+
+## Development maturity
+
+[alpha.md](alpha.md) defines Alpha as working primary workflows, sufficiently
+stable architecture, and independent developer handoff. Current stage is
+**pre-alpha**; [PROJECT_STATUS.md](PROJECT_STATUS.md#alpha-readiness) records the
+seven criteria. Historical “Beta” and “Post-Beta” delivery labels do not certify
+maturity. Existing constitutional publication requirements remain in force.
+
+This constitution defines requirements, not a declaration that every requirement
+is implemented. [PROJECT_STATUS.md](PROJECT_STATUS.md) records current gaps.
+[The tooling constitution](.specify/memory/constitution.md) summarizes these principles
+for Spec Kit; [DOCUMENTATION.md](DOCUMENTATION.md) defines document responsibilities.
+
 
 ## **1. Purpose**
 The speckit Constitution establishes the enduring governance principles for the Sudoku engine, its variants, and all supporting systems.  
@@ -114,8 +128,8 @@ The Constitution is supported by the following mandatory governance artifacts:
 2. **[Release Checklist](RELEASE_CHECKLIST.md)** — a normative checklist that must be completed before any release; references all five appendices.  
 3. **[Migrations Register](MIGRATIONS.md)** — a versioned history of all serialization schema changes; governed by [Appendix E](speckit.constitution.appendix.e.md).  
 4. **[CI Enforcement Plan](CI%20Enforcement%20Plan.md)** — maps constitutional rules and appendix standards to automated CI checks.  
-5. **GOVERNANCE.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines the governance model and decision authority.  
-6. **MAINTAINERS.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines roles and responsibilities.
+5. **[GOVERNANCE.md](GOVERNANCE.md)** — defines the governance model and decision authority.
+6. **[MAINTAINERS.md](MAINTAINERS.md)** — defines roles and responsibilities.
 
 These artifacts are normative.  
 No release may proceed unless:
@@ -128,8 +142,8 @@ No release may proceed unless:
 ## **8. Governance Integration**
 The Constitution is supported by the following mandatory governance artifacts:
 
-- **GOVERNANCE.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines the governance model and decision authority  
-- **MAINTAINERS.md** (see [CI Enforcement Plan](CI%20Enforcement%20Plan.md)) — defines roles and responsibilities  
+- **[GOVERNANCE.md](GOVERNANCE.md)** — defines the governance model and decision authority
+- **[MAINTAINERS.md](MAINTAINERS.md)** — defines roles and responsibilities
 - **[C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md)** — defines how appendices evolve  
 - **[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)** — required for every release  
 - **[MIGRATIONS.md](MIGRATIONS.md)** — authoritative record of schema evolution  

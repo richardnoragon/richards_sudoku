@@ -1,10 +1,16 @@
 # Security Policy
 
+## Alpha alignment
+
+The [Alpha data-risk criterion](alpha.md) requires documented limitations and
+recovery evidence. DOC-03 and DOC-06 data safeguards now have automated regression
+coverage in [project status](PROJECT_STATUS.md); manual platform review remains open.
+
 This document defines the security posture for Sudoku-inator and gives contributors and users a clear way to report issues and understand how the project handles local data and operational risk.
 
 ## Current project status
 
-The project is currently in a stable beta/release-candidate state for the implemented feature set, with active local validation and a documented operational baseline. The codebase is primarily a desktop application with local save-state handling and limited remote exposure by default.
+The project is a local desktop application. The package version is 0.1.0; release validation remains open. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the implementation baseline. Local game saves and imported data are the main application data boundaries.
 
 ## Supported versions
 
@@ -12,7 +18,7 @@ The project currently supports the following runtime and packaging baseline:
 
 - Python 3.13+
 - PyQt6-compatible desktop runtime
-- Current stable release branch and the most recent development branch in active maintenance
+- Current development line; no separately verified stable-release support commitment is recorded here
 
 Because this project is still in active development, the project team may only provide security updates for the current release line and the most recent actively maintained development branch.
 
