@@ -1,159 +1,29 @@
-# Milestone Roadmap: richards_sudoku
+# Milestone roadmap
 
-## 🛡️ Engineering Hardening (Current Priority)
-**Goal:** Enforce merge-blocking quality gates immediately and improve release confidence.
+Shared status: [PROJECT_STATUS.md](PROJECT_STATUS.md). Detailed priorities:
+[ROADMAP.md](ROADMAP.md). Delivery mapping: [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md).
 
-- **Status Tracking (authoritative files)**
-  - [x] Hardening tracked in `speckit.tasks`
-  - [x] Release gate tracked in `RELEASE_CHECKLIST.md`
-  - [x] Hardening phase tracked in this roadmap
+| Milestone | Status |
+| --- | --- |
+| Engineering hardening | Workflow implemented: Markdown, Ruff, model mypy, three-OS tests; refresh remote evidence for release |
+| UX foundation | Initial labels, status feedback, and keyboard guidance implemented; broader accessibility open |
+| MVP | Standard gameplay, hint contract, and load-state fixes covered by regression tests |
+| Additional variants (historically “Beta”) | Jigsaw, Str8ts, Killer, and SE techniques implemented; no maturity claim |
+| Alpha | Not reached: independent handoff and architecture review remain; workflow/data safeguards tested |
+| Beta readiness | Pending Alpha and reliable ordinary-user workflow evidence |
+| Persistence | JSON v2, UI text/JSON exchange, restore consistency, backups, original clues, and hypotheses implemented |
+| Extended variants | All four enabled; 1–25 entry and Codewords hypotheses implemented and lifecycle tested |
+| Release candidate | Local installed-wheel checks pass; pending current CI, manual platforms, and sign-offs |
+| Future expansion | Editor, network sharing, multiplayer, cloud, mobile remain proposals |
 
-- **Merge-Blocking CI Gates (required on every PR)**
-  - [x] Markdown lint (all markdown files)
-  - [x] Python lint and import-order checks
-  - [x] Python type checks
-  - [x] Full pytest suite, including UI tests
-  - [x] Test matrix on Windows, Linux, macOS
+## Exit criteria
 
-- **Hardening Follow-ups**
-  - [x] Remove or rewrite non-normative governance prose in policy docs
-  - [x] Expand README with user-friendly onboarding + contributor quickstart
-  - [x] Resolve remaining lint/type findings until CI is consistently green
-  - [x] Document branch protection setup in repository settings
+Meet all seven [Alpha criteria](alpha.md) before declaring Alpha. Review the repaired
+primary workflows and data safeguards, then record the DOC-09 handoff. Later Beta and
+publication checks require their own evidence. Resolve DOC-01 through DOC-10 in
+[IMPLEMENTATION_ISSUES.md](IMPLEMENTATION_ISSUES.md) and
+[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Maintain runtime/schema compatibility
+and record any future format changes in [MIGRATIONS.md](MIGRATIONS.md).
 
-- **Exit Criteria**
-  - [x] All required CI checks are green on PRs and `main`
-  - [x] Branch protection blocks merges when any required check fails
-  - [x] RELEASE_CHECKLIST evidence links are attached before release
-
-**Evidence:**
-- Branch ruleset: <https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804>
-- Workflow run reference: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>
-- Enforcement probe: direct push to `main` rejected (`GH006`, pull-request-required).
-
----
-
-## 🎯 MVP (Minimum Viable Product)
-**Goal:** Establish a working UI with basic gameplay.
-
-- **UI Foundations**
-  - Grid rendering (9x9 standard Sudoku).
-  - Cell selection, number entry (keyboard/mouse).
-  - Highlighting of selected cell, row, column, and region.
-  - Basic themes (light/dark mode).
-
-- **Game Basics**
-  - New puzzle generation (standard Sudoku only).
-  - Puzzle validation (ensure solvable).
-  - Save/load functionality (JSON format).
-  - Timer tracking solution duration.
-
-- **Assistance Features**
-  - Pencil marks (candidate numbers).
-  - Undo/redo moves.
-
-- **Acceptance Criteria**
-  - User can start, play, and finish a standard Sudoku game.
-  - UI is intuitive and responsive.
-  - Save/load works reliably with puzzle state preserved.
-
----
-
-## 🚀 Beta Release
-**Goal:** Expand functionality and introduce multiple variants + advanced assistance.
-
-- **Variants**
-  - Add Jigsaw Sudoku.
-  - Add Str8ts.
-  - Add Killer Sudoku (cage‑sum constraints; `KILLER` variant in model).
-  - Add extended 1–25 Sudoku.
-  - Architecture supports future variants.
-
-- **Difficulty & Grading**
-  - SE difficulty rating engine (`difficulty_se.py`): 17 techniques, weighted‑average score, Easy/Medium/Hard/Extreme labels.
-  - SE score displayed in status bar on new game and load.
-  - SE score/label persisted in save JSON (schema v2) and restored on load without recomputing.
-
-- **Gameplay Assistance**
-  - Hint system (show possible numbers for a cell).
-  - Configurable hint limits.
-  - Conflict highlighting (duplicate numbers in row/column/region).
-
-- **Game Management**
-  - Import/export puzzles (JSON/text format).
-  - Difficulty levels (Easy, Medium, Hard, Expert).
-
-- **Tracking & Analytics**
-  - Track moves made.
-  - Track hints used.
-  - End‑of‑game statistics summary.
-
-- **Acceptance Criteria**
-  - User can play multiple Sudoku variants.
-  - Assistance features work consistently across variants.
-  - Import/export allows puzzle sharing.
-
----
-
-## ⚙️ Extended Variants
-**Goal:** Enable the four variants that were present but greyed out in Beta.
-
-- **1–25 Sudoku**
-  - 25×25 grid with 5×5 box regions; symbols 1–25.
-  - `OneToTwentyFiveWorker`; auto-scaling UI; 2-digit symbol display; scrollable grid.
-  - Performance budget: generation < 30 s; `grade()` < 1 s; cancel always available.
-
-- **Codewords Sudoku**
-  - 9×9 grid using letters A–I instead of digits 1–9.
-  - Bijective codebook (letter → digit); difficulty-scaled `given_mappings` clues.
-  - `CodewordsWorker`; Codebook Panel UI; `_CodewordsMapping` SE technique (weight 1.3).
-
-- **KenKen (Calcudoku)**
-  - N×N grid for N ∈ {4, 6, 9}; row and column uniqueness (no box regions).
-  - Arithmetic cages with one of +, −, ×, ÷ and a target value.
-  - `KenKenCagePartitioner`; `KenKenWorker`; `_KenKenCage` SE technique (weight 1.9).
-  - Cage labels show `"12+"`, `"6×"`, `"2÷"` in topmost-leftmost cell.
-
-- **Kakuro**
-  - Crossword-style grid; black header cells carry across/down run-sum clues.
-  - Run-sum and no-repeat-per-run constraints; no global row/column uniqueness.
-  - `KakuroTemplateLibrary`; `KakuroFillGenerator`; `KakuroWorker`.
-  - Diagonal clue labels in black cells; run-peer highlight; `_KakuroRun` SE technique (weight 2.1).
-
-- **Acceptance Criteria**
-  - All four variants playable with consistent controls and assistance features.
-  - Background workers with spinner and cancel for each variant.
-  - SE grading, persistence, import/export working for all four variants.
-  - Existing Beta variants unaffected.
-
----
-
-## 🌟 Full Release
-**Goal:** Deliver a polished, extensible product with advanced features and scalability.
-
-- **Advanced Features**
-  - Puzzle editor (custom rule sets).
-  - Online puzzle sharing & leaderboards.
-  - Multiplayer timed challenges.
-  - Cloud save integration.
-  - Advanced SE techniques: XY‑Wing, XYZ‑Wing, Unique Rectangles, BUG, Forcing Chains.
-
-- **UI Enhancements**
-  - Mobile‑friendly adaptation.
-  - Customizable themes and accessibility options (font sizes, color palettes).
-  - Keyboard shortcuts for common actions.
-
-- **Technical Improvements**
-  - Optimized solver for large grids.
-  - Modular architecture with clear documentation.
-  - Automated testing suite for puzzle generation/solving.
-
-- **Acceptance Criteria**
-  - Application supports advanced variants and sharing features.
-  - UI is polished, accessible, and cross‑platform.
-  - Solver handles large puzzles efficiently.
-  - Documentation and testing ensure maintainability.
-
----
-
-👉 This roadmap ensures you start with a **playable UI (MVP)**, then expand into **variants and assistance (Beta)**, and finally deliver a **feature‑rich, scalable product (Full Release)**.  
+Performance targets are maintained in [Appendix D](speckit.constitution.appendix.d.md).
+Local automated results live only in [TESTING.md](TESTING.md#latest-local-validation).

@@ -1,12 +1,27 @@
-# Product Requirements Document (PRD) Checklist: richards_sudoku
+# Product Requirements Document (PRD) Checklist: Sudoku-inator
+
+## Alpha alignment
+
+Assess these product criteria alongside the seven [Alpha criteria](alpha.md).
+DOC-01–05 and the data safeguards in DOC-06 have implementation and regression
+evidence; independent handoff and manual acceptance remain open. Handoff and architecture evidence are tracked by DOC-09; checked delivery
+batches do not satisfy this acceptance review.
+
+## Acceptance status
+
+These are acceptance criteria, not a completed test report. Use
+[PROJECT_STATUS.md](PROJECT_STATUS.md) for implemented behavior and open DOC issues.
+DOC-01–05 workflow fixes are implemented and covered by regression tests. Remaining
+DOC-06 work is font controls, contextual help, and manual accessibility review.
+
 
 ## 1. Game Management
 
 ### User Story 1.1  
 As a user, I want to **create a new Sudoku puzzle** so that I can start playing immediately.  
 - **Acceptance Criteria:**  
-  - User can select puzzle type: Standard, Jigsaw, Str8ts, Killer (Beta); 1–25, Codewords, KenKen, Kakuro (Extended Variants phase).  
-  - Greyed-out variants are visible in the selector but disabled until their implementation batch ships.  
+  - User can select puzzle type: Standard, Jigsaw, Str8ts, Killer; 1–25, Codewords, KenKen, Kakuro (Extended Variants phase).
+  - All eight variants have automated input/completion coverage; record manual interaction before release.
   - Puzzle is generated with valid solvable configuration.  
   - Difficulty level can be chosen (Easy, Medium, Hard, Expert).  
   - SE difficulty score and category label are displayed in the status bar after generation.  
@@ -21,7 +36,7 @@ As a user, I want to **save my current game** so I can resume later.
 ### User Story 1.3  
 As a user, I want to **load a saved game** so I can continue where I left off.  
 - **Acceptance Criteria:**  
-  - Load restores puzzle state exactly as saved.  
+  - Load restores the agreed session state; remaining allowance, notes, and original clues are restored (DOC-03).
   - Timer resumes from saved time.  
   - Pencil marks and hints are preserved.  
   - SE difficulty score and category are restored from save file (no recomputation on load).
@@ -61,7 +76,7 @@ As a user, I want to **undo/redo moves** so I can correct mistakes.
 - **Acceptance Criteria:**  
   - Undo reverts last move.  
   - Redo restores undone move.  
-  - Unlimited undo/redo stack.  
+  - In-memory board/pencil undo/redo; timer/hint counters excluded and history cleared on load.
 
 ---
 
@@ -71,7 +86,7 @@ As a user, I want to **undo/redo moves** so I can correct mistakes.
 As a user, I want to **track my time** so I know how long solving takes.  
 - **Acceptance Criteria:**  
   - Timer starts when puzzle begins.  
-  - Timer pauses when game is saved.  
+  - Timer pauses during saving and resumes after a successful save.
   - Timer resumes when game is loaded.  
 
 ### User Story 3.2  
@@ -95,8 +110,8 @@ As a user, I want a **clear grid display** so I can easily play.
 As a user, I want **customizable themes** so I can adjust for comfort.  
 - **Acceptance Criteria:**  
   - Light/dark mode available.  
-  - Adjustable font sizes.  
-  - Color themes configurable.  
+  - Adjustable font sizes (open, DOC-06).
+  - Light/dark selection implemented; custom palettes remain future work.
 
 ---
 

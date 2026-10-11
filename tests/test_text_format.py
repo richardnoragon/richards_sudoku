@@ -3,7 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from richards_sudoku.services.text_format import export_text, import_text
+from sudoku_inator.services.text_format import (
+    export_puzzle_pack,
+    export_text,
+    import_puzzle_pack,
+    import_text,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +96,23 @@ class TestStandardRoundTrip:
         text = "variant: standard\nseed: 0\ndifficulty: easy\n" + ("0" * 9 + "\n") * 9
         with pytest.raises(ValueError, match="size"):
             import_text(text)
+
+    def test_puzzle_pack_round_trip(self):
+        meta = _std_meta()
+        pack = export_puzzle_pack(
+            [
+                {"board": _std_board_values(), "meta": meta, "seed": 1, "difficulty": "easy"},
+                {"board": _std_board_values(), "meta": meta, "seed": 2, "difficulty": "medium"},
+            ],
+            title="Starter Set",
+            description="Two sample puzzles",
+        )
+        loaded = import_puzzle_pack(pack)
+        assert len(loaded) == 2
+        assert loaded[0]["title"] == "Starter Set"
+        assert loaded[0]["seed"] == 1
+        assert loaded[1]["difficulty"] == "medium"
+        assert loaded[0]["board"] == _std_board_values()
 
 
 # ---------------------------------------------------------------------------

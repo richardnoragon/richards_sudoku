@@ -1,7 +1,18 @@
+> Status: these are release requirements. Current implementation and gaps are in
+> [PROJECT_STATUS.md](PROJECT_STATUS.md); automation coverage is in
+> [the CI enforcement plan](CI%20Enforcement%20Plan.md).
+
+---
 
 > **Governance cross-references:** Parent: [speckit.constitution](speckit.constitution) §4 & §6 | Lifecycle: [C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md) | Enforced by: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) §4 | CI checks: [CI Enforcement Plan](CI%20Enforcement%20Plan.md) | Related: [Appendix A](speckit.constitution.appendix.a.md) (layer integrity), [Appendix B](speckit.constitution.appendix.b.md) (UI smoke tests)
 
 # **Appendix C — UX Interaction Model**
+
+## Alpha evidence
+
+Apply [alpha.md](alpha.md) alongside the requirements in this appendix.
+Primary input, interaction, and unsaved-progress safeguards block Alpha where
+unimplemented. Track remaining polish separately without waiving release requirements.
 
 ## **C1. Grid Interaction Rules**
 - Selected cell must highlight:

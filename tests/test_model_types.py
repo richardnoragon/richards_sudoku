@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from richards_sudoku.model.schema import (
+from sudoku_inator.model.schema import (
     CURRENT_SCHEMA_VERSION,
     add_version,
     check_version,
 )
-from richards_sudoku.model.types import Board, Cell, Move, Variant, VariantMetadata
+from sudoku_inator.model.types import Board, Cell, Move, Variant, VariantMetadata
 
 
 class TestCell:

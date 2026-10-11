@@ -1,5 +1,29 @@
 
+
+## Current release status
+
+Release approval is pending. Use [PROJECT_STATUS.md](PROJECT_STATUS.md) for implemented
+behavior and open gaps, and [TESTING.md](TESTING.md#latest-local-validation) for local
+results. Complete this checklist for the final release commit; historical evidence
+below does not certify the current remote settings or candidate.
+
+- [ ] Resolve or explicitly defer DOC-01 through DOC-10 with rationale and acceptance evidence.
+- [ ] Record a fresh-install and manual gameplay check for each target platform.
+- [ ] Attach current CI evidence and verify required-check enforcement.
+
 # **RELEASE_CHECKLIST.md (Governance‑Enforced)**
+
+## Development maturity gate
+
+Use [alpha.md](alpha.md) for stage definitions. Current status is **pre-alpha**.
+
+- [ ] All seven [Alpha criteria](PROJECT_STATUS.md#alpha-readiness) have evidence,
+  including DOC-09 independent handoff and architecture stability review.
+- [ ] Beta ordinary-user reliability has been demonstrated for the agreed scope.
+- [ ] Candidate revision, scope, known limitations, and intended release stage are recorded.
+
+These entries do not replace the publication requirements below. A recorded exception
+cannot establish Alpha while a required primary workflow remains broken.
 
 This is a **publication‑grade** checklist.  
 It ensures every release respects the Constitution and all appendices.
@@ -83,11 +107,13 @@ It ensures every release respects the Constitution and all appendices.
 - [ ] UX Lead  
 - [ ] Performance Lead  
 - [ ] Persistence Lead  
-- [x] Branch ruleset is configured on `main` with required pull requests and required status checks
+- [ ] Verify the `main` branch ruleset requires pull requests and all five current status checks for this release
 
 ---
 
-### **9. Hardening Evidence Links**
+### **9. Historical Hardening Evidence Links**
+
+Previously recorded evidence; not revalidated during the 2026-09-29 local documentation review.
 - Branch ruleset: <https://github.com/richardnoragon/richards_sudoku/settings/rules/19846804>
 - Blocking verification PR (closed after validation): <https://github.com/richardnoragon/richards_sudoku/pull/1>
 - Quality Gates workflow run: <https://github.com/richardnoragon/richards_sudoku/actions/runs/30296831560>

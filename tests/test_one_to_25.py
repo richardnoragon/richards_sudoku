@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from richards_sudoku.model.types import Board, Variant, VariantMetadata
-from richards_sudoku.solver.variant_generators import OneToTwentyFiveGenerator
+from sudoku_inator.model.types import Board, Variant, VariantMetadata
+from sudoku_inator.solver.variant_generators import OneToTwentyFiveGenerator
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ class TestOneToTwentyFiveUniqueness:
         puzzle = [row[:] for row in solution]
         puzzle[0][0] = None  # remove one cell
 
-        from richards_sudoku.solver.generator import check_unique
+        from sudoku_inator.solver.generator import check_unique
         t0 = time.time()
         result = check_unique(meta, puzzle)
         elapsed = time.time() - t0
@@ -130,7 +130,7 @@ class TestOneToTwentyFiveTextFormat:
         return puzzle, solution
 
     def test_export_import_round_trip(self) -> None:
-        from richards_sudoku.services.text_format import export_text, import_text
+        from sudoku_inator.services.text_format import export_text, import_text
 
         puzzle, _ = self._build_puzzle_and_solution()
         meta = _make_25x25_meta()
@@ -152,7 +152,7 @@ class TestOneToTwentyFiveTextFormat:
         assert board_vals == puzzle
 
     def test_import_wrong_row_length_raises(self) -> None:
-        from richards_sudoku.services.text_format import import_text
+        from sudoku_inator.services.text_format import import_text
 
         lines = ["variant: 1to25", "size: 25", "seed: 1", "difficulty: easy"]
         # Only one digit row with wrong token count
@@ -169,9 +169,9 @@ class TestOneToTwentyFiveTextFormat:
 
 class TestOneToTwentyFivePersistence:
     def test_persistence_round_trip(self, tmp_path) -> None:
-        from richards_sudoku.persistence.persistence import save, load, SaveState
-        from richards_sudoku.services.timer import GameTimer
-        from richards_sudoku.services.stats import GameStats
+        from sudoku_inator.persistence.persistence import save, load, SaveState
+        from sudoku_inator.services.timer import GameTimer
+        from sudoku_inator.services.stats import GameStats
 
         gen = OneToTwentyFiveGenerator(seed=3)
         solution = gen.generate()
@@ -216,7 +216,7 @@ class TestOneToTwentyFivePersistence:
 @pytest.mark.qt
 class TestOneToTwentyFiveUISmoke:
     def test_grid_renders_25x25(self, qtbot) -> None:
-        from richards_sudoku.ui.grid_widget import SudokuGridWidget
+        from sudoku_inator.ui.grid_widget import SudokuGridWidget
 
         gen = OneToTwentyFiveGenerator(seed=17)
         solution = gen.generate()
@@ -249,7 +249,7 @@ class TestOneToTwentyFiveUISmoke:
 
     def test_cell_selection_25x25(self, qtbot) -> None:
         from PyQt6.QtCore import Qt
-        from richards_sudoku.ui.grid_widget import SudokuGridWidget
+        from sudoku_inator.ui.grid_widget import SudokuGridWidget
 
         gen = OneToTwentyFiveGenerator(seed=21)
         solution = gen.generate()

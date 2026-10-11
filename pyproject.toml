@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "richards-sudoku"
+name = "sudoku-inator"
 version = "0.1.0"
-description = "A Python + PyQt6 Sudoku application supporting multiple variants."
+description = "Sudoku-inator: a Python + PyQt6 Sudoku application supporting multiple variants."
 requires-python = ">=3.13"
 dependencies = [
     "PyQt6>=6.10",
@@ -20,7 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-richards-sudoku = "richards_sudoku.main:main"
+sudoku-inator = "sudoku_inator.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -30,6 +30,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+qt_api = "pyqt6"
+markers = [
+    "qt: Qt UI tests",
+    "slow: slow-running tests",
+]
 
 [tool.ruff]
 target-version = "py313"
@@ -40,7 +45,7 @@ select = ["E9", "F63", "F7", "F82"]
 
 [tool.mypy]
 python_version = "3.13"
-files = ["src/richards_sudoku/model"]
+files = ["src/sudoku_inator/model"]
 ignore_missing_imports = true
 warn_unused_ignores = true
 pretty = true

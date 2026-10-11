@@ -1,0 +1,10 @@
+# Only files required by the runtime and test targets enter the build context.
+**
+!pyproject.toml
+!src/
+!src/**
+!tests/
+!tests/**
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/

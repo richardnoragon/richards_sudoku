@@ -11,8 +11,8 @@ import json
 
 import pytest
 
-from richards_sudoku.model.types import Variant, VariantMetadata
-from richards_sudoku.services.variant_registry import REGISTRY
+from sudoku_inator.model.types import Variant, VariantMetadata
+from sudoku_inator.services.variant_registry import REGISTRY, register_variant
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +88,30 @@ class TestBatchJRegistry:
         meta = REGISTRY[Variant.KAKURO]["factory"](seed=0)
         assert "clues" in meta.constraints
 
+    def test_register_variant_supports_extension_hook(self) -> None:
+        original = REGISTRY[Variant.STANDARD].copy()
+        try:
+            def _demo_factory(seed: int = 0, difficulty: str = "medium") -> VariantMetadata:
+                return VariantMetadata(
+                    name=Variant.STANDARD,
+                    size=9,
+                    symbols=list(range(1, 10)),
+                    region_layout=[[0 for _ in range(9)] for _ in range(9)],
+                    constraints={"demo": True},
+                )
+
+            entry = register_variant(
+                Variant.STANDARD,
+                factory=_demo_factory,
+                constraint_ok=lambda grid: True,
+            )
+            assert entry["factory"] is _demo_factory
+            assert callable(entry["constraint_ok"])
+            meta = REGISTRY[Variant.STANDARD]["factory"]()
+            assert meta.constraints["demo"] is True
+        finally:
+            REGISTRY[Variant.STANDARD] = original
+
 
 # ---------------------------------------------------------------------------
 # J3 — NewGameDialog correct enable/disable state
@@ -97,7 +121,7 @@ class TestBatchJRegistry:
 class TestBatchJDialog:
     def test_dialog_has_all_variants(self, qtbot) -> None:
         from PyQt6.QtWidgets import QApplication
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
         dlg = NewGameDialog(initial_seed=42)
         qtbot.addWidget(dlg)
@@ -113,7 +137,7 @@ class TestBatchJDialog:
         assert "Kakuro" in labels
 
     def test_one_to_25_is_enabled(self, qtbot) -> None:
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
         dlg = NewGameDialog(initial_seed=1)
         qtbot.addWidget(dlg)
@@ -129,7 +153,7 @@ class TestBatchJDialog:
 
     @pytest.mark.qt
     def test_kenken_is_enabled(self, qtbot) -> None:
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
         dlg = NewGameDialog(initial_seed=6)
         qtbot.addWidget(dlg)
@@ -144,7 +168,7 @@ class TestBatchJDialog:
 
     @pytest.mark.qt
     def test_codewords_is_enabled(self, qtbot) -> None:
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
         dlg = NewGameDialog(initial_seed=5)
         qtbot.addWidget(dlg)
@@ -158,7 +182,7 @@ class TestBatchJDialog:
         assert item.isEnabled(), "Codewords variant combo item should be enabled"
 
     def test_size_combo_shows_25x25_for_one_to_25(self, qtbot) -> None:
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
         dlg = NewGameDialog(initial_seed=3)
         qtbot.addWidget(dlg)
@@ -171,7 +195,7 @@ class TestBatchJDialog:
         assert dlg._size_combo.currentText() == "25×25"
 
     def test_size_combo_shows_9x9_for_standard(self, qtbot) -> None:
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
 
         dlg = NewGameDialog(initial_seed=4)
         qtbot.addWidget(dlg)

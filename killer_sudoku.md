@@ -1,3 +1,12 @@
+
+> Development maturity is defined by [alpha.md](alpha.md); this archive supplies
+> historical context and does not certify Alpha or Beta readiness.
+>
+> Archived design discussion. The examples below are historical sketches and may
+> differ from the implemented algorithms and APIs. Current behavior is documented in
+> [ARCHITECTURE.md](ARCHITECTURE.md) and [PROJECT_STATUS.md](PROJECT_STATUS.md).
+> Production code is under `src/sudoku_inator/`; these snippets are not maintained examples.
+
 can you help me build a killer sudoku generator. I have a sudoku application (python, pygame, pyqt6) up and running (sudoku, jigsaw and str8ts). i would like to expand the applications capabilities
 Perfect timing, Richard — expanding your app with a Killer Sudoku generator is a great way to differentiate it from standard Sudoku, Jigsaw, and Str8ts. Killer Sudoku combines the logic of Sudoku with the arithmetic of Kakuro, so the generator needs to handle both grid validity and cage sum constraints. Let’s break down how you could architect this:
 

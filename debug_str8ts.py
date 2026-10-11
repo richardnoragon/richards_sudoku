@@ -1,7 +1,7 @@
 """Debug script for Str8ts filter issue."""
-from richards_sudoku.model.types import Board, Variant, VariantMetadata
-from richards_sudoku.services.candidates import update_all_candidates
-from richards_sudoku.services.str8ts_utils import _can_extend_straight
+from sudoku_inator.model.types import Board, Variant, VariantMetadata
+from sudoku_inator.services.candidates import update_all_candidates
+from sudoku_inator.services.str8ts_utils import _can_extend_straight
 
 def _str8ts_meta_with_black(black_cells):
     meta = VariantMetadata.standard_9x9()

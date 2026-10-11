@@ -1,3 +1,10 @@
+## Alpha impact
+
+- [ ] Stage and scope claims follow [alpha.md](../alpha.md).
+- [ ] Affected DOC issues and [Alpha readiness](../PROJECT_STATUS.md#alpha-readiness)
+  are updated with evidence; no unchecked criterion is claimed complete.
+- [ ] Handoff/setup/architecture guidance is updated when affected (DOC-09).
+
 ## Summary
 
 Describe what changed and why.
@@ -26,7 +33,7 @@ For each checked item, include a link to proof (workflow run, test output, diff,
 
 Reference checklist file:
 
-- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
+- [RELEASE_CHECKLIST.md](../RELEASE_CHECKLIST.md)
 
 ## Validation Run Locally
 

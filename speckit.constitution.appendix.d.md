@@ -1,8 +1,19 @@
+> Status: these are release requirements. Current implementation and gaps are in
+> [PROJECT_STATUS.md](PROJECT_STATUS.md); automation coverage is in
+> [the CI enforcement plan](CI%20Enforcement%20Plan.md).
+
 ---
 
 > **Governance cross-references:** Parent: [speckit.constitution](speckit.constitution) §5 & §6 | Lifecycle: [C.L.E.A.R. Lifecycle Table](C.L.E.A.R.%20Lifecycle%20Table%20per%20Appendix.md) | Enforced by: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) §5 | CI checks: [CI Enforcement Plan](CI%20Enforcement%20Plan.md) | Related: [Appendix B](speckit.constitution.appendix.b.md) §B3 (performance tests), [Appendix A](speckit.constitution.appendix.a.md) (quality standards)
 
 # **Appendix D — Performance Budgets & Benchmarks**
+
+## Alpha evidence
+
+Apply [alpha.md](alpha.md) alongside the requirements in this appendix.
+Alpha permits further tuning, but major workflows must remain usable. Preserve
+these performance targets and record actual evidence without assuming every budget
+is enforced by CI.
 
 ## **D1. Solver Latency Budgets**
 - 9×9 puzzle validation: **< 200ms**
@@ -35,12 +46,12 @@
 ## **D5. Regression Guards**
 - No single commit may regress any budget by **> 10%** without explicit approval
 - CI benchmarks must run on every PR touching `solver/`, `services/`, `persistence/`, or `ui/`
-- Profiling methodology: `pytest-benchmark` for unit‑level; wall‑clock timing assertions in `tests/test_performance.py`
+- Current checks use wall-clock timing assertions in `tests/test_performance.py`; pytest-benchmark and historical regression comparison are not configured.
 
 ## **D6. Profiling Methodology**
 - Hot paths to instrument: `_fill_grid`, `_count_solutions`, `grade()`, `update_all_candidates`, `save`, `load`
 - Benchmarks use fixed seeds for determinism (see [Appendix B](speckit.constitution.appendix.b.md) §B5)
-- Results tracked in CI; dashboard updated on each minor release
+- Timing assertions run in CI. A historical results dashboard and memory profiling are future enforcement work.
 
 ---
 

@@ -22,10 +22,10 @@ from pytestqt.qtbot import QtBot
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 
-from richards_sudoku.main import MainWindow
-from richards_sudoku.model.types import Board, Variant, VariantMetadata
-from richards_sudoku.ui.grid_widget import SudokuGridWidget
-from richards_sudoku.ui.theme import DARK, LIGHT, apply_palette, make_font
+from sudoku_inator.main import MainWindow
+from sudoku_inator.model.types import Board, Variant, VariantMetadata
+from sudoku_inator.ui.grid_widget import SudokuGridWidget
+from sudoku_inator.ui.theme import DARK, LIGHT, apply_palette, make_font
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ def grid_widget(qtbot: QtBot, board: Board, meta: VariantMetadata) -> SudokuGrid
 class TestMainWindowSmoke:
 
     def test_window_title(self, main_window: MainWindow):
-        assert "Sudoku" in main_window.windowTitle()
+        assert "sudoku-inator" in main_window.windowTitle().lower()
 
     def test_has_menu_bar(self, main_window: MainWindow):
         assert main_window.menuBar() is not None
@@ -113,6 +113,30 @@ class TestMainWindowSmoke:
 
     def test_mode_label_present(self, main_window: MainWindow):
         assert "Normal" in main_window._lbl_mode.text()
+
+    def test_selection_status_has_clear_context(self, main_window: MainWindow):
+        assert "Selected" in main_window._lbl_cell.text() or main_window._lbl_cell.text() == ""
+        main_window._grid.select_cell(2, 2)
+        assert "Selected:" in main_window._lbl_cell.text()
+        assert "R3C3" in main_window._lbl_cell.text()
+
+    def test_help_hint_is_visible_for_keyboard_input(self, main_window: MainWindow):
+        assert "keyboard" in main_window.statusBar().currentMessage().lower() or main_window._lbl_mode.text()
+
+    def test_restart_clears_selected_cell_label(
+        self,
+        main_window: MainWindow,
+        meta: VariantMetadata,
+    ):
+        main_window._ctrl.new_game(meta=meta, difficulty="easy", seed=1, hint_limit=3)
+        main_window._on_cell_selected(1, 1)
+        assert main_window._lbl_cell.text() == "Selected: R2C2"
+
+        main_window._ctrl.restart_game(reset_timer=True)
+        main_window._refresh_board_context("Game restarted.")
+
+        assert main_window._grid.selected_cell is None
+        assert main_window._lbl_cell.text() == ""
 
 
 # ---------------------------------------------------------------------------
@@ -475,7 +499,7 @@ class TestVariantConstraintInvariants:
 class TestTextFormatRoundTrip:
     """import_text(export_text(…)) reconstructs the same values and metadata."""
 
-    from richards_sudoku.services.text_format import export_text, import_text
+    from sudoku_inator.services.text_format import export_text, import_text
 
     def _board_values(self, board: Board) -> list[list[int | None]]:
         return [
@@ -484,7 +508,7 @@ class TestTextFormatRoundTrip:
         ]
 
     def test_standard_round_trip(self):
-        from richards_sudoku.services.text_format import export_text, import_text
+        from sudoku_inator.services.text_format import export_text, import_text
         meta = VariantMetadata.standard_9x9()
         board = Board(size=9, variant=Variant.STANDARD)
         board.cell(0, 0).value = 3
@@ -498,7 +522,7 @@ class TestTextFormatRoundTrip:
         assert diff2 == "medium"
 
     def test_jigsaw_round_trip_preserves_region_layout(self):
-        from richards_sudoku.services.text_format import export_text, import_text
+        from sudoku_inator.services.text_format import export_text, import_text
         meta = _jigsaw_meta()
         board = Board(size=9, variant=Variant.JIGSAW)
         board.cell(1, 1).value = 2
@@ -509,7 +533,7 @@ class TestTextFormatRoundTrip:
         assert md2["region_layout"] == meta.region_layout
 
     def test_str8ts_round_trip_preserves_black_cells(self):
-        from richards_sudoku.services.text_format import export_text, import_text
+        from sudoku_inator.services.text_format import export_text, import_text
         meta = _str8ts_meta()
         board = Board(size=9, variant=Variant.STR8TS)
         board.cell(2, 2).value = 5
@@ -522,7 +546,7 @@ class TestTextFormatRoundTrip:
         assert exported_blacks == original_blacks
 
     def test_killer_round_trip_preserves_cage_sums(self):
-        from richards_sudoku.services.text_format import export_text, import_text
+        from sudoku_inator.services.text_format import export_text, import_text
         meta = _killer_meta()
         board = Board(size=9, variant=Variant.KILLER)
         board.cell(0, 0).value = 1
@@ -542,13 +566,13 @@ class TestTextFormatRoundTrip:
 class TestNewGameDialogSmoke:
 
     def test_dialog_instantiates(self, qtbot: QtBot):
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
         dlg = NewGameDialog(initial_seed=0)
         qtbot.addWidget(dlg)
         assert dlg is not None
 
     def test_dialog_has_required_properties(self, qtbot: QtBot):
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
         dlg = NewGameDialog(initial_seed=0)
         qtbot.addWidget(dlg)
         # Must expose meta, difficulty, hint_limit, puzzle, solution
@@ -556,7 +580,7 @@ class TestNewGameDialogSmoke:
             assert hasattr(dlg, attr), f"Missing property: {attr}"
 
     def test_dialog_title(self, qtbot: QtBot):
-        from richards_sudoku.ui.new_game_dialog import NewGameDialog
+        from sudoku_inator.ui.new_game_dialog import NewGameDialog
         dlg = NewGameDialog(initial_seed=0)
         qtbot.addWidget(dlg)
         assert "New Game" in dlg.windowTitle()

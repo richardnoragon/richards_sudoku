@@ -5,9 +5,12 @@ import time
 
 import pytest
 
-from richards_sudoku.model.types import Board, Variant, VariantMetadata
-from richards_sudoku.services.difficulty_se import (
+from sudoku_inator.model.types import Board, Variant, VariantMetadata
+from sudoku_inator.services.difficulty_se import (
+    _AlignedPairExclusion,
+    _BUG,
     _Claiming,
+    _ForcingChain,
     _HiddenPair,
     _HiddenQuad,
     _HiddenSingleBlock,
@@ -23,7 +26,10 @@ from richards_sudoku.services.difficulty_se import (
     _Pointing,
     _Str8tsRun,
     _Swordfish,
+    _UniqueRectangle,
     _WorkingGrid,
+    _XYWing,
+    _XYZWing,
     _XWing,
     grade,
     score_to_label,
@@ -536,6 +542,110 @@ class TestTechniqueHiddenQuad:
         assert grid.candidates[0][1] == {1, 2, 3, 4}
         assert grid.candidates[0][2] == {1, 2, 3, 4}
         assert grid.candidates[0][3] == {1, 2, 3, 4}
+
+
+def _freeze_irrelevant_cells(
+    grid: _WorkingGrid,
+    keep: set[tuple[int, int]],
+    value: int = 9,
+) -> None:
+    for r in range(grid.size):
+        for c in range(grid.size):
+            if (r, c) not in keep:
+                grid.values[r][c] = value
+                grid.candidates[r][c] = set()
+
+
+class TestTechniqueXYWing:
+
+    def test_fires_and_eliminates_from_common_peers(self) -> None:
+        grid = _empty_grid()
+        keep = {(1, 1), (3, 1), (1, 3), (3, 3)}
+        _freeze_irrelevant_cells(grid, keep)
+        grid.candidates[1][1] = {1, 2}
+        grid.candidates[3][1] = {1, 3}
+        grid.candidates[1][3] = {2, 3}
+        grid.candidates[3][3] = {1, 2, 3}
+
+        tech = _XYWing()
+        assert tech.apply(grid) is True
+        assert 3 not in grid.candidates[3][3]
+
+
+class TestTechniqueXYZWing:
+
+    def test_fires_and_eliminates_from_common_peers(self) -> None:
+        grid = _empty_grid()
+        keep = {(1, 1), (3, 1), (1, 3), (3, 3)}
+        _freeze_irrelevant_cells(grid, keep)
+        grid.candidates[1][1] = {1, 2, 3}
+        grid.candidates[3][1] = {1, 3}
+        grid.candidates[1][3] = {2, 3}
+        grid.candidates[3][3] = {1, 2, 3}
+
+        tech = _XYZWing()
+        assert tech.apply(grid) is True
+        assert 3 not in grid.candidates[3][3]
+
+
+class TestTechniqueUniqueRectangle:
+
+    def test_fires_and_reduces_odd_corner(self) -> None:
+        grid = _empty_grid()
+        keep = {(0, 0), (0, 1), (1, 0), (1, 1)}
+        _freeze_irrelevant_cells(grid, keep)
+        grid.candidates[0][0] = {1, 2, 3}
+        grid.candidates[0][1] = {1, 2}
+        grid.candidates[1][0] = {1, 2}
+        grid.candidates[1][1] = {1, 2}
+
+        tech = _UniqueRectangle()
+        assert tech.apply(grid) is True
+        assert grid.candidates[0][0] == {1, 2}
+
+
+class TestTechniqueBUG:
+
+    def test_fires_and_sets_extra_candidate(self) -> None:
+        grid = _empty_grid()
+        keep = {(0, 0), (0, 1), (0, 2), (0, 3)}
+        _freeze_irrelevant_cells(grid, keep)
+        grid.candidates[0][0] = {1, 2}
+        grid.candidates[0][1] = {1, 2}
+        grid.candidates[0][2] = {1, 2, 3}
+        grid.candidates[0][3] = {2, 3}
+
+        tech = _BUG()
+        assert tech.apply(grid) is True
+        assert grid.values[0][2] == 1
+
+
+class TestTechniqueAlignedPairExclusion:
+
+    def test_fires_from_region_aligned_pair(self) -> None:
+        grid = _empty_grid()
+        keep = {(0, 0), (0, 1), (0, 3)}
+        _freeze_irrelevant_cells(grid, keep)
+        grid.candidates[0][0] = {1, 2}
+        grid.candidates[0][1] = {1, 2}
+        grid.candidates[0][3] = {1, 2, 4}
+
+        tech = _AlignedPairExclusion()
+        assert tech.apply(grid) is True
+        assert grid.candidates[0][3] == {4}
+
+
+class TestTechniqueForcingChain:
+
+    def test_fires_when_assumption_contradicts_existing_value(self) -> None:
+        grid = _empty_grid()
+        grid.values[0][0] = 1
+        grid.candidates[0][0] = set()
+        grid.candidates[0][1] = {1, 2}
+
+        tech = _ForcingChain()
+        assert tech.apply(grid) is True
+        assert grid.values[0][1] == 2
 
 
 # ---------------------------------------------------------------------------

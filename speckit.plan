@@ -1,4 +1,42 @@
-# speckit Plan: richards_sudoku
+# speckit Plan: sudoku-inator
+
+Current naming (2026-10-10): `sudoku-inator`, Python package `sudoku_inator`.
+See [REBRANDING.md](REBRANDING.md); original records below retain their names.
+
+## Development maturity
+
+[alpha.md](alpha.md) defines Alpha as working primary workflows, sufficiently
+stable architecture, and independent developer handoff. Current stage is
+**pre-alpha**; [PROJECT_STATUS.md](PROJECT_STATUS.md#alpha-readiness) records the
+seven criteria. Historical “Beta” and “Post-Beta” delivery labels do not certify
+maturity. Existing constitutional publication requirements remain in force.
+
+## Current contract and status (2026-09-29)
+
+The sections under “Original design record” retain earlier design-round decisions.
+They are historical implementation guidance, not a current API or completion claim.
+Use [PROJECT_STATUS.md](PROJECT_STATUS.md) for actual behavior,
+[ARCHITECTURE.md](ARCHITECTURE.md) for current interfaces, and
+[speckit.tasks](speckit.tasks) for open work. Current requirements are in
+[prd.md](prd.md), [prd_checklist.md](prd_checklist.md), and [UX_DESIGN_SPEC.md](UX_DESIGN_SPEC.md).
+
+Current corrections (2026-10-01):
+
+- The shell consumes the generation worker's metadata, puzzle, and solution directly.
+- All eight variants have automated generation/play/save/resume/completion coverage.
+- F4 enters values 1–25; Codewords unknown mappings are editable player hypotheses.
+- Supported hint modes: Auto, Reveal, Eliminate, Naked Single, Candidate. Candidate
+  is free; other successful modes spend one hint. Multi-reveal/Walkthrough are deferred.
+- JSON/text Import/Export and variant-aware Check Board are wired in the shell.
+- Version 2 has optional original clues and player hypotheses. Loading restores
+  allowance and exact notes; history is session-local and value edits recompute candidates.
+- Save/Discard/Cancel protects destructive transitions; failed saves keep the session.
+- Shared partial validation and bounded variant search repair the generated lifecycle;
+  conservative clue removal can retain extra givens. See PROJECT_STATUS.md for limits.
+- The old rounds below do not supersede these contracts. DOC-09 independent handoff,
+  remaining DOC-06 accessibility, and DOC-07 manual/platform approval remain open.
+
+## Original design record
 
 ## Phases
 1) Foundations (MVP alignment) — COMPLETE

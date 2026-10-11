@@ -8,15 +8,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from richards_sudoku.model.types import Board, Cell, Variant, VariantMetadata
-from richards_sudoku.services.difficulty_se import (
+from sudoku_inator.model.types import Board, Cell, Variant, VariantMetadata
+from sudoku_inator.services.difficulty_se import (
     _KakuroRun,
     _WorkingGrid,
     _kakuro_can_reach,
     _kakuro_run_step,
 )
-from richards_sudoku.services.text_format import export_text, import_text
-from richards_sudoku.solver.variant_generators import (
+from sudoku_inator.services.text_format import export_text, import_text
+from sudoku_inator.solver.variant_generators import (
     KakuroFillGenerator,
     KakuroTemplateLibrary,
     build_kakuro_clue_positions,
@@ -375,7 +375,7 @@ class TestKakuroIsComplete:
 
     def _make_controller(self, board: Board, meta: VariantMetadata):
         from unittest.mock import MagicMock
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         ctrl = MagicMock(spec=GameController)
         ctrl._board = board
         ctrl._meta = meta
@@ -397,7 +397,7 @@ class TestKakuroIsComplete:
         )
 
     def test_complete_when_all_runs_satisfied(self):
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         # Build a board where a 2-cell run [(0,0),(0,1)] with sum 3 is filled with 1,2
         board = Board(size=9, variant=Variant.KAKURO)
         board.cell(0, 0).value = 1
@@ -419,7 +419,7 @@ class TestKakuroIsComplete:
         assert result is True
 
     def test_incomplete_when_run_sum_wrong(self):
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         board = Board(size=9, variant=Variant.KAKURO)
         board.cell(0, 0).value = 3  # wrong sum: 3+3=6 ≠ 3
         board.cell(0, 1).value = 3
@@ -438,7 +438,7 @@ class TestKakuroIsComplete:
         assert result is False
 
     def test_incomplete_when_run_has_repeat(self):
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         board = Board(size=9, variant=Variant.KAKURO)
         board.cell(0, 0).value = 2  # repeat: 2+1=3 is correct sum but... wait need repeat
         board.cell(0, 1).value = 1
@@ -462,7 +462,7 @@ class TestKakuroIsComplete:
         assert result is False
 
     def test_incomplete_when_cell_is_none(self):
-        from richards_sudoku.controller.game_controller import GameController
+        from sudoku_inator.controller.game_controller import GameController
         board = Board(size=9, variant=Variant.KAKURO)
         # Leave (0,0) empty
         board.cell(0, 1).value = 2
@@ -483,9 +483,9 @@ class TestKakuroIsComplete:
 class TestKakuroPersistence:
 
     def _make_save_state(self):
-        from richards_sudoku.persistence import SaveState
-        from richards_sudoku.services.stats import GameStats
-        from richards_sudoku.services.timer import GameTimer
+        from sudoku_inator.persistence import SaveState
+        from sudoku_inator.services.stats import GameStats
+        from sudoku_inator.services.timer import GameTimer
 
         meta = _kakuro_meta_minimal()
         board = _kakuro_board_minimal()
@@ -506,7 +506,7 @@ class TestKakuroPersistence:
         )
 
     def test_roundtrip_json_preserves_clues(self, tmp_path: Path):
-        from richards_sudoku.persistence import load, save
+        from sudoku_inator.persistence import load, save
         state = self._make_save_state()
         path = tmp_path / "kakuro_test.json"
         save(state, path)
@@ -519,7 +519,7 @@ class TestKakuroPersistence:
             assert loaded_c["dir"] == orig["dir"]
 
     def test_roundtrip_rebuilds_clue_positions(self, tmp_path: Path):
-        from richards_sudoku.persistence import load, save
+        from sudoku_inator.persistence import load, save
         state = self._make_save_state()
         path = tmp_path / "kakuro_cluepos_test.json"
         save(state, path)
@@ -529,7 +529,7 @@ class TestKakuroPersistence:
         assert len(clue_pos) > 0
 
     def test_validation_rejects_missing_clues(self):
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         meta = VariantMetadata(
             name=Variant.KAKURO,
             size=4,
@@ -541,7 +541,7 @@ class TestKakuroPersistence:
             _validate_variant_constraints(meta)
 
     def test_validation_rejects_bad_direction(self):
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         meta = VariantMetadata(
             name=Variant.KAKURO,
             size=4,
@@ -557,7 +557,7 @@ class TestKakuroPersistence:
             _validate_variant_constraints(meta)
 
     def test_validation_rejects_run_of_one(self):
-        from richards_sudoku.persistence.persistence import _validate_variant_constraints
+        from sudoku_inator.persistence.persistence import _validate_variant_constraints
         meta = VariantMetadata(
             name=Variant.KAKURO,
             size=4,

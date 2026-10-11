@@ -1,3 +1,12 @@
+
+> Development maturity is defined by [alpha.md](alpha.md); this archive supplies
+> historical context and does not certify Alpha or Beta readiness.
+>
+> Archived design discussion. The examples below are historical sketches and may
+> differ from the implemented algorithms and APIs. Current behavior is documented in
+> [ARCHITECTURE.md](ARCHITECTURE.md) and [PROJECT_STATUS.md](PROJECT_STATUS.md).
+> Production code is under `src/sudoku_inator/`; these snippets are not maintained examples.
+
 ---
 
 Algorithm:

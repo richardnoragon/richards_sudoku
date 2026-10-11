@@ -1,4 +1,4 @@
-"""Convert _templates_output.json -> src/richards_sudoku/solver/one_to_25_templates.py"""
+"""Convert _templates_output.json -> src/sudoku_inator/solver/one_to_25_templates.py"""
 import json, textwrap, pathlib
 
 data = json.load(open("_templates_output.json"))
@@ -41,6 +41,6 @@ lines.append('}')
 lines.append('# fmt: on')
 lines.append('')
 
-out = pathlib.Path(r"src\richards_sudoku\solver\one_to_25_templates.py")
+out = pathlib.Path(r"src\sudoku_inator\solver\one_to_25_templates.py")
 out.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 print(f"Written to {out}  ({out.stat().st_size//1024} KB)")

@@ -5,6 +5,13 @@ source: https://en.wikipedia.org/wiki/KenKen
 author: Contributors to Wikimedia projects
 ---
 
+> Development maturity is defined by [alpha.md](alpha.md); this archive supplies
+> historical context and does not certify Alpha or Beta readiness.
+>
+> Archived reference snapshot, preserved with its original source attribution.
+> This describes puzzle background, not the current app's capabilities or release status.
+> See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the implementation baseline.
+
 # KenKen - Wikipedia
 
 > ## Excerpt
